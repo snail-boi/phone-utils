@@ -1,0 +1,94 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>phone_utils</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>logo.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="outside exe%27s\**" />
+    <EmbeddedResource Remove="outside exe%27s\**" />
+    <None Remove="outside exe%27s\**" />
+    <Page Remove="outside exe%27s\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="logo.ico" />
+    <None Remove="Resources\adb.exe" />
+    <None Remove="Resources\AdbWinApi.dll" />
+    <None Remove="Resources\AdbWinUsbApi.dll" />
+    <None Remove="Resources\avcodec-61.dll" />
+    <None Remove="Resources\avformat-61.dll" />
+    <None Remove="Resources\avutil-59.dll" />
+    <None Remove="Resources\icon.png" />
+    <None Remove="Resources\libusb-1.0.dll" />
+    <None Remove="Resources\open_a_terminal_here.bat" />
+    <None Remove="Resources\scrcpy-console.bat" />
+    <None Remove="Resources\scrcpy-noconsole.vbs" />
+    <None Remove="Resources\scrcpy-server" />
+    <None Remove="Resources\scrcpy.exe" />
+    <None Remove="Resources\SDL2.dll" />
+    <None Remove="Resources\swresample-5.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="logo.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\adb.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\AdbWinApi.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\AdbWinUsbApi.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\avcodec-61.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\avformat-61.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\avutil-59.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\icon.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\libusb-1.0.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\open_a_terminal_here.bat">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\scrcpy-console.bat">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\scrcpy-noconsole.vbs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\scrcpy-server">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\scrcpy.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\SDL2.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\swresample-5.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DiscordRichPresence" Version="1.5.0.51" />
+  </ItemGroup>
+
+</Project>

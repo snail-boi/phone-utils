@@ -1,0 +1,33 @@
+﻿<Window x:Class="phone_utils.RemoteFolderPicker"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Select Remote Folder"
+        Width="600" Height="400"
+        Background="#111111"
+        Foreground="White"
+        WindowStartupLocation="CenterOwner">
+
+    <Window.Resources>
+        <!-- Make TreeViewItem text white -->
+        <Style TargetType="TreeViewItem">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TreeView x:Name="FolderTree"
+                  Background="#222"
+                  BorderBrush="#444"
+                  SelectedItemChanged="FolderTree_SelectedItemChanged" />
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,0,0">
+            <Button Content="OK" Width="80" Margin="5" Click="OkButton_Click"/>
+            <Button Content="Cancel" Width="80" Margin="5" Click="CancelButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

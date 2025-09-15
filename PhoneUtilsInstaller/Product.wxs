@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*" Name="Phone Utils" Language="1033" Version="1.1.8.0" Manufacturer="Snailtech" UpgradeCode="e7b1c9f8-6f7d-4a2b-9f3d-2e5b8a1c4d9f">
+    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" />
+
+    <Media Id="1" Cabinet="media1.cab" EmbedCab="yes" />
+
+    <!-- Icon -->
+    <Icon Id="PhoneUtilsIcon" SourceFile="assets\logo.ico" />
+
+    <!-- Upgrade info for updates -->
+    <Upgrade Id="e7b1c9f8-6f7d-4a2b-9f3d-2e5b8a1c4d9f">
+      <UpgradeVersion Minimum="0.0.0" Maximum="99.0.0" IncludeMinimum="yes" IncludeMaximum="no" Property="OLDPRODUCTS"/>
+    </Upgrade>
+
+    <InstallExecuteSequence>
+      <RemoveExistingProducts Before="InstallInitialize"/>
+    </InstallExecuteSequence>
+
+    <!-- Directory structure -->
+    <Directory Id="TARGETDIR" Name="SourceDir">
+
+      <!-- Main EXE in Program Files -->
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="Phone Utils">
+
+          <Component Id="PhoneUtilsExeComponent" Guid="e3f8c1a4-4c3d-44a8-90f3-1234567890ab">
+            <File Id="PhoneUtilsExe" Source="..\phone utils\bin\Debug\net8.0-windows\phone utils.exe" KeyPath="yes" Vital="yes"/>
+          </Component>
+
+          <Component Id="PhoneUtilsDllComponent" Guid="a8b9c2d3-6e4f-42b2-91f4-abcdefabcdef">
+            <File Id="PhoneUtilsDll" Source="..\phone utils\bin\Debug\net8.0-windows\phone utils.dll" KeyPath="yes" Vital="yes"/>
+          </Component>
+
+          <Component Id="DiscordRPCDllComponent" Guid="f1e2d3c4-5b6a-42d1-87c9-1234abcd5678">
+            <File Id="DiscordRPCDll" Source="..\phone utils\bin\Debug\net8.0-windows\DiscordRPC.dll" KeyPath="yes"/>
+          </Component>
+
+          <Component Id="NewtonsoftJsonDllComponent" Guid="12ab34cd-56ef-42a1-b789-abcdef123456">
+            <File Id="NewtonsoftJsonDll" Source="..\phone utils\bin\Debug\net8.0-windows\Newtonsoft.Json.dll" KeyPath="yes"/>
+          </Component>
+
+          <Component Id="DepsJsonComponent" Guid="789abc12-345d-42fa-b567-9876fedcba12">
+            <File Id="DepsJson" Source="..\phone utils\bin\Debug\net8.0-windows\phone utils.deps.json" KeyPath="yes" Vital="yes"/>
+          </Component>
+
+          <Component Id="RuntimeConfigJsonComponent" Guid="3456ab78-90cd-42ef-a123-fedcba987654">
+            <File Id="RuntimeConfigJson" Source="..\phone utils\bin\Debug\net8.0-windows\phone utils.runtimeconfig.json" KeyPath="yes" Vital="yes"/>
+          </Component>
+
+        </Directory>
+      </Directory>
+
+      <!-- Resources folder in per-user AppData -->
+      <Directory Id="AppDataFolder">
+        <Directory Id="AppDataPhoneUtilsFolder" Name="Phone Utils">
+          <Directory Id="AppDataResourcesFolder" Name="Resources">
+
+            <!-- Resource files with HKCU key path -->
+            <Component Id="AdbExeComponent" Guid="1a2b3c4d-5e6f-47a8-912b-abcdef123aaa">
+              <File Id="AdbExe" Source="..\phone utils\bin\Debug\net8.0-windows\Resources\adb.exe"/>
+              <RegistryValue Root="HKCU" Key="Software\PhoneUtils\Resources" Name="AdbExe" Type="string" Value="1" KeyPath="yes"/>
+            </Component>
+
+            <Component Id="AdbWinApiDllComponent" Guid="2b3c4d5e-6f7a-48b9-923c-bcdef123abcd">
+              <File Id="AdbWinApiDll" Source="..\phone utils\bin\Debug\net8.0-windows\Resources\AdbWinApi.dll"/>
+              <RegistryValue Root="HKCU" Key="Software\PhoneUtils\Resources" Name="AdbWinApiDll" Type="string" Value="1" KeyPath="yes"/>
+            </Component>
+
+            <Component Id="AdbWinUsbApiDllComponent" Guid="abcdef12-3456-6789-abcd-123456abcdef">
+              <File Id="AdbWinUsbApiDll" Source="..\phone utils\bin\Debug\net8.0-windows\Resources\AdbWinUsbApi.dll"/>
+              <RegistryValue Root="HKCU" Key="Software\PhoneUtils\Resources" Name="AdbWinUsbApiDll" Type="string" Value="1" KeyPath="yes"/>
+            </Component>
+
+            <Component Id="AvcodecDllComponent" Guid="3c4d5e6f-7a8b-49c0-934d-cdef123abcde">
+              <File Id="AvcodecDll" Source="..\phone utils\bin\Debug\net8.0-windows\Resources\avcodec-61.dll"/>
+              <RegistryValue Root="HKCU" Key="Software\PhoneUtils\Resources" Name="AvcodecDll" Type="string" Value="1" KeyPath="yes"/>
+            </Component>
+
+            <Component Id="AvformatDllComponent" Guid="4d5e6f7a-8b9c-50d1-945e-def123abcd12">
+              <File Id="AvformatDll" Source="..\phone utils\bin\Debug\net8.0-windows\Resources\avformat-61.dll"/>
+              <RegistryValue Root="HKCU" Key="Software\PhoneUtils\Resources" Name="AvformatDll" Type="string" Value="1" KeyPath="yes"/>
+            </Component>
+
+            <Component Id="AvutilDllComponent" Guid="5e6f7a8b-9c0d-51e2-956f-ef123abcd123">
+              <File Id="AvutilDll" Source="..\phone utils\bin\Debug\net8.0-windows\Resources\avutil-59.dll"/>
+              <RegistryValue Root="HKCU" Key="Software\PhoneUtils\Resources" Name="AvutilDll" Type="string" Value="1" KeyPath="yes"/>
+            </Component>
+
+            <Component Id="LibusbDllComponent" Guid="6f7a8b9c-0d1e-52f3-9670-f123abcd1234">
+              <File Id="LibusbDll" Source="..\phone utils\bin\Debug\net8.0-windows\Resources\libusb-1.0.dll"/>
+              <RegistryValue Root="HKCU" Key="Software\PhoneUtils\Resources" Name="LibusbDll" Type="string" Value="1" KeyPath="yes"/>
+            </Component>
+
+            <Component Id="ScrcpyExeComponent" Guid="7a8b9c0d-1e2f-5345-9781-1234abcdef12">
+              <File Id="ScrcpyExe" Source="..\phone utils\bin\Debug\net8.0-windows\Resources\scrcpy.exe"/>
+              <RegistryValue Root="HKCU" Key="Software\PhoneUtils\Resources" Name="ScrcpyExe" Type="string" Value="1" KeyPath="yes"/>
+            </Component>
+
+            <Component Id="ScrcpyServerComponent" Guid="8b9c0d1e-2f3a-5456-9892-2345abcdef12">
+              <File Id="ScrcpyServer" Source="..\phone utils\bin\Debug\net8.0-windows\Resources\scrcpy-server"/>
+              <RegistryValue Root="HKCU" Key="Software\PhoneUtils\Resources" Name="ScrcpyServer" Type="string" Value="1" KeyPath="yes"/>
+            </Component>
+
+            <Component Id="SDL2DllComponent" Guid="9c0d1e2f-3a4b-5567-9903-3456abcdef12">
+              <File Id="SDL2Dll" Source="..\phone utils\bin\Debug\net8.0-windows\Resources\SDL2.dll"/>
+              <RegistryValue Root="HKCU" Key="Software\PhoneUtils\Resources" Name="SDL2Dll" Type="string" Value="1" KeyPath="yes"/>
+            </Component>
+
+            <Component Id="SwresampleDllComponent" Guid="0d1e2f3a-4b5c-5678-9014-4567abcdef12">
+              <File Id="SwresampleDll" Source="..\phone utils\bin\Debug\net8.0-windows\Resources\swresample-5.dll"/>
+              <RegistryValue Root="HKCU" Key="Software\PhoneUtils\Resources" Name="SwresampleDll" Type="string" Value="1" KeyPath="yes"/>
+            </Component>
+
+            <!-- Folder component to remove directories and files on uninstall -->
+            <Component Id="AppDataFolderComponent" Guid="abcdef12-3456-7890-abcd-ef1234567890">
+              <CreateFolder />
+              <RemoveFile Id="RemoveAllFilesFromResources" Name="*" On="uninstall" Directory="AppDataResourcesFolder"/>
+              <RemoveFolder Id="RemoveResourcesFolder" On="uninstall" Directory="AppDataResourcesFolder"/>
+              <RemoveFolder Id="RemoveAppDataPhoneUtilsFolder" On="uninstall" Directory="AppDataPhoneUtilsFolder"/>
+              <RegistryValue Root="HKCU" Key="Software\PhoneUtils" Name="Installed" Type="integer" Value="1" KeyPath="yes"/>
+            </Component>
+
+          </Directory>
+        </Directory>
+      </Directory>
+
+      <!-- Start Menu and Desktop shortcuts -->
+      <Directory Id="ProgramMenuFolder" Name="Programs" />
+      <Directory Id="DesktopFolder" Name="Desktop" />
+
+    </Directory>
+
+    <!-- Start Menu shortcut -->
+    <DirectoryRef Id="ProgramMenuFolder">
+      <Component Id="StartMenuShortcutComponent" Guid="2345abcd-6789-0123-efab-4567abcdef12">
+        <Shortcut Id="StartMenuShortcut"
+                  Name="Phone Utils"
+                  Description="Launch Phone Utils"
+                  Target="[INSTALLFOLDER]phone utils.exe"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="PhoneUtilsIcon"
+                  IconIndex="0"/>
+        <RemoveFolder Id="RemoveStartMenuShortcuts" On="uninstall"/>
+        <RegistryValue Root="HKCU" Key="Software\PhoneUtils" Name="StartMenuShortcut" Type="integer" Value="1" KeyPath="yes"/>
+      </Component>
+    </DirectoryRef>
+
+    <!-- Desktop shortcut -->
+    <DirectoryRef Id="DesktopFolder">
+      <Component Id="DesktopShortcutComponent" Guid="3456abcd-7890-1234-abcd-5678abcdef12">
+        <Shortcut Id="DesktopShortcut"
+                  Name="Phone Utils"
+                  Description="Launch Phone Utils"
+                  Target="[INSTALLFOLDER]phone utils.exe"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="PhoneUtilsIcon"
+                  IconIndex="0"/>
+        <RemoveFolder Id="RemoveDesktopShortcut" On="uninstall"/>
+        <RegistryValue Root="HKCU" Key="Software\PhoneUtils" Name="DesktopShortcut" Type="integer" Value="1" KeyPath="yes"/>
+      </Component>
+    </DirectoryRef>
+
+    <!-- Feature -->
+    <Feature Id="Complete" Title="Phone Utils" Level="1">
+      <ComponentRef Id="PhoneUtilsExeComponent"/>
+      <ComponentRef Id="PhoneUtilsDllComponent"/>
+      <ComponentRef Id="DiscordRPCDllComponent"/>
+      <ComponentRef Id="NewtonsoftJsonDllComponent"/>
+      <ComponentRef Id="DepsJsonComponent"/>
+      <ComponentRef Id="RuntimeConfigJsonComponent"/>
+
+      <ComponentRef Id="AdbExeComponent"/>
+      <ComponentRef Id="AdbWinApiDllComponent"/>
+      <ComponentRef Id="AdbWinUsbApiDllComponent"/>
+      <ComponentRef Id="AvcodecDllComponent"/>
+      <ComponentRef Id="AvformatDllComponent"/>
+      <ComponentRef Id="AvutilDllComponent"/>
+      <ComponentRef Id="LibusbDllComponent"/>
+      <ComponentRef Id="ScrcpyExeComponent"/>
+      <ComponentRef Id="ScrcpyServerComponent"/>
+      <ComponentRef Id="SDL2DllComponent"/>
+      <ComponentRef Id="SwresampleDllComponent"/>
+      <ComponentRef Id="AppDataFolderComponent"/>
+
+      <ComponentRef Id="StartMenuShortcutComponent"/>
+      <ComponentRef Id="DesktopShortcutComponent"/>
+    </Feature>
+
+  </Product>
+</Wix>

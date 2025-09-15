@@ -1,0 +1,209 @@
+﻿<UserControl x:Class="phone_utils.FileSync" 
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             HorizontalAlignment="Stretch"
+             VerticalAlignment="Stretch"
+             Background="#661E1E1E">
+
+    <UserControl.Resources>
+        <!-- Modern Button Style -->
+        <Style x:Key="ModernButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource ButtonBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ButtonForeground}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                        Background="{TemplateBinding Background}"
+                        CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ButtonHover}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ButtonHover}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#d3d3d3"/>
+                                <Setter Property="Foreground" Value="#777"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- TextBox Style -->
+        <Style TargetType="TextBox">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#222"/>
+            <Setter Property="BorderBrush" Value="#444"/>
+            <Setter Property="CaretBrush" Value="White"/>
+            <Setter Property="Padding" Value="4"/>
+            <Setter Property="Margin" Value="4,4,0,4"/>
+        </Style>
+
+        <!-- TextBlock/Label Style -->
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <!-- ListBox Style -->
+        <Style TargetType="ListBox">
+            <Setter Property="Background" Value="#222"/>
+            <Setter Property="BorderBrush" Value="#444"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="Padding" Value="4"/>
+        </Style>
+
+        <!-- Folder Recursion Toggle Style -->
+        <Style x:Key="ToggleCheckBoxStyle" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Border x:Name="border"
+                                Background="Red"
+                                CornerRadius="6"
+                                BorderThickness="0"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="Green"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Opacity" Value="0.8"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#555"/>
+                                <Setter Property="Foreground" Value="#aaa"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Top Controls Grid -->
+        <Border Background="#2a2a2a" CornerRadius="8" Padding="8" Margin="0,0,0,8">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <!-- Added Row for Drag & Drop box under Remote Dir -->
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Buttons Row -->
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left">
+                        <Button x:Name="StartSyncButton" Content="Start PC Sync" Style="{StaticResource ModernButtonStyle}" Click="StartSyncButton_Click" Margin="0,0,0,4"/>
+                        <Button x:Name="StartReverseSyncButton" Content="Start Phone Sync" Style="{StaticResource ModernButtonStyle}" Click="StartReverseSyncButton_Click" Margin="8,0,0,4"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <CheckBox x:Name="FolderRecursionCheckBox" Content="Folder Recursion" Style="{StaticResource ToggleCheckBoxStyle}" VerticalAlignment="Center" Margin="0,0,0,4"/>
+                        <Button x:Name="StopSyncButton" Content="Stop Sync" Style="{StaticResource ModernButtonStyle}" Click="StopSyncButton_Click" IsEnabled="False" Margin="8,0,0,4"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Local Directory -->
+                <Grid Grid.Row="1" Margin="0,4,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Local Dir:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBox Grid.Column="1" x:Name="LocalDirTextBox" Text="C:\Users\wille\Desktop\Audio" TextChanged="LocalDirTextBox_TextChanged"/>
+                    <Button Grid.Column="2" Content="Browse..." Style="{StaticResource ModernButtonStyle}" Click="BrowseLocalDir_Click"/>
+                </Grid>
+
+                <!-- Remote Directory -->
+                <Grid Grid.Row="2" Margin="0,4,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Remote Dir:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBox Grid.Column="1" x:Name="RemoteDirTextBox" Text="/storage/emulated/0/Download/YTDLnis/Audio" TextChanged="RemoteDirTextBox_TextChanged"/>
+                    <Button Grid.Column="2" Content="Browse..." Style="{StaticResource ModernButtonStyle}" Click="BrowseRemoteDir_Click"/>
+                </Grid>
+
+                <!-- Drag & Drop Box (placed under Remote Dir as requested) -->
+                <Border Grid.Row="3" Margin="0,8,0,0" Background="#222" CornerRadius="6" BorderBrush="#444" BorderThickness="1" Padding="8"
+                        AllowDrop="True"
+                        DragEnter="FileDropBox_DragEnter"
+                        DragOver="FileDropBox_DragOver"
+                        Drop="FileDropBox_Drop"
+                        x:Name="FileDropBox">
+                    <Grid>
+                        <TextBlock Text="Drag files here to upload to Remote Dir" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="White"/>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ListBoxes Grid with Horizontal Resizing -->
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="5"/>
+                <!-- GridSplitter -->
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="5"/>
+                <!-- GridSplitter -->
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Labels -->
+            <TextBlock Text="Status" Grid.Row="0" Grid.Column="0" Margin="4" FontWeight="Bold" Foreground="#5539cc"/>
+            <TextBlock Text="Success" Grid.Row="0" Grid.Column="2" Margin="4" FontWeight="Bold" Foreground="LightGreen"/>
+            <TextBlock Text="Failed" Grid.Row="0" Grid.Column="4" Margin="4" FontWeight="Bold" Foreground="Tomato"/>
+
+            <!-- ListBoxes -->
+            <ListBox x:Name="StatusLog" Grid.Row="1" Grid.Column="0"/>
+            <ListBox x:Name="SuccessList" Grid.Row="1" Grid.Column="2" Foreground="LightGreen" MouseDoubleClick="SuccessList_MouseDoubleClick"/>
+            <ListBox x:Name="FailedList" Grid.Row="1" Grid.Column="4" Foreground="Tomato"/>
+
+            <!-- Vertical GridSplitters -->
+            <GridSplitter Grid.Row="1" Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="#444" ShowsPreview="True"/>
+            <GridSplitter Grid.Row="1" Grid.Column="3" Width="5" HorizontalAlignment="Stretch" Background="#444" ShowsPreview="True"/>
+        </Grid>
+    </Grid>
+</UserControl>

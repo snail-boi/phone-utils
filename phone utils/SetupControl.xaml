@@ -1,0 +1,299 @@
+﻿<UserControl x:Class="phone_utils.SetupControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="#661E1E1E">
+
+    <UserControl.Resources>
+        <!-- Modern Button Style -->
+        <Style x:Key="ModernButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource ButtonBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ButtonForeground}" />
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ButtonHover}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ButtonHover}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#d3d3d3"/>
+                                <Setter Property="Foreground" Value="#777"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="ColorButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="Gray"
+                        BorderThickness="1"
+                        CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                        </Border>
+                        <!-- No triggers for hover or pressed -->
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+
+        <!-- TextBox Style -->
+        <Style TargetType="TextBox">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#222"/>
+            <Setter Property="BorderBrush" Value="#444"/>
+            <Setter Property="CaretBrush" Value="White"/>
+        </Style>
+
+        <!-- PasswordBox Style -->
+        <Style TargetType="PasswordBox">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#222"/>
+            <Setter Property="BorderBrush" Value="#444"/>
+            <Setter Property="CaretBrush" Value="White"/>
+        </Style>
+
+        <!-- Dark ComboBox Style -->
+        <Style TargetType="ComboBox" x:Key="DarkComboBox">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#222"/>
+            <Setter Property="BorderBrush" Value="#444"/>
+            <Setter Property="Padding" Value="2"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton Name="ToggleButton"
+                                          Grid.Column="2"
+                                          Focusable="false"
+                                          IsChecked="{Binding Path=IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                          ClickMode="Press"
+                                          Background="#222"
+                                          BorderBrush="#444"
+                                          BorderThickness="1">
+                                <Path x:Name="Arrow" 
+                                      Fill="White" 
+                                      HorizontalAlignment="Center" 
+                                      VerticalAlignment="Center" 
+                                      Data="M 0 0 L 4 4 L 8 0 Z"/>
+                            </ToggleButton>
+                            <ContentPresenter Name="ContentSite"
+                                              IsHitTestVisible="False"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              Margin="3,3,23,3"
+                                              VerticalAlignment="Center"
+                                              HorizontalAlignment="Left"/>
+                            <Popup Name="Popup"
+                                   Placement="Bottom"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Slide">
+                                <Border x:Name="DropDownBorder"
+                                        Background="#222"
+                                        BorderBrush="#444"
+                                        BorderThickness="1">
+                                    <ScrollViewer Margin="4,6,4,6" SnapsToDevicePixels="True">
+                                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="HasItems" Value="false">
+                                <Setter TargetName="DropDownBorder" Property="MinHeight" Value="95"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="#777"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Label/TextBlock Style -->
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style TargetType="Label">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid VerticalAlignment="Top" HorizontalAlignment="Center">
+        <Border Background="#2a2a2a" 
+                CornerRadius="8" 
+                Padding="12" 
+                BorderBrush="Gray" 
+                BorderThickness="1"
+                VerticalAlignment="Top"
+                HorizontalAlignment="Center">
+
+            <StackPanel>
+
+                <!-- Saved Devices + Device Name + Pincode + Buttons -->
+                <StackPanel Orientation="Vertical" Margin="10">
+
+                    <!-- Saved Devices ComboBox -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                        <TextBlock Text="Saved Devices:" Width="120" VerticalAlignment="Center"/>
+                        <ComboBox x:Name="DeviceSelector"
+          Width="310"
+          DisplayMemberPath="Name"
+          SelectedValuePath="UsbSerial"
+          SelectionChanged="DeviceSelector_SelectionChanged"
+          Foreground="White"
+          BorderBrush="#444"
+          IsEditable="False">
+                            <ComboBox.Resources>
+                                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#5539cc"/>
+                                <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="White"/>
+                            </ComboBox.Resources>
+                            <ComboBox.Template>
+                                <ControlTemplate TargetType="ComboBox">
+                                    <Grid>
+                                        <ToggleButton Name="ToggleButton"
+                          Background="#222"
+                          BorderBrush="{TemplateBinding BorderBrush}"
+                          BorderThickness="{TemplateBinding BorderThickness}"
+                          Focusable="False"
+                          IsChecked="{Binding Path=IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                          ClickMode="Press"
+                          HorizontalContentAlignment="Left"
+                          VerticalContentAlignment="Center">
+                                            <ContentPresenter Name="ContentSite"
+                                  Content="{TemplateBinding SelectionBoxItem}"
+                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                  Margin="4,2,0,2"
+                                  HorizontalAlignment="Left"
+                                  VerticalAlignment="Center"
+                                  RecognizesAccessKey="True"/>
+                                        </ToggleButton>
+
+                                        <Popup Name="Popup"
+                   Placement="Bottom"
+                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                   AllowsTransparency="True"
+                   Focusable="False"
+                   PopupAnimation="Slide">
+                                            <Border Background="#222" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1">
+                                                <ScrollViewer Margin="4,6,4,6" SnapsToDevicePixels="True">
+                                                    <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                                </ScrollViewer>
+                                            </Border>
+                                        </Popup>
+                                    </Grid>
+                                </ControlTemplate>
+                            </ComboBox.Template>
+
+                        </ComboBox>
+
+
+                    </StackPanel>
+
+                    <!-- Device Name TextBox -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                        <TextBlock Text="Device Name:" Width="120" VerticalAlignment="Center"/>
+                        <TextBox x:Name="TxtDeviceName" Width="310" Margin="0,0,5,0"/>
+                    </StackPanel>
+
+                    <!-- Pincode PasswordBox -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                        <TextBlock Text="Pincode:" Width="120" VerticalAlignment="Center"/>
+                        <PasswordBox x:Name="TxtPincode" Width="310" Margin="0,0,5,0"/>
+                    </StackPanel>
+
+                    <!-- Save & Delete Buttons -->
+                    <StackPanel Orientation="Horizontal" Margin="0,5,0,0" HorizontalAlignment="Center">
+                        <Button Content="Save Current USB Device" 
+                                Click="SaveCurrentDevice" 
+                                Style="{StaticResource ModernButtonStyle}"
+                                Margin="0,0,0,0"/>
+                        <Button Content="Delete Selected Device"
+                                Click="DeleteSelectedDevice"
+                                Style="{StaticResource ModernButtonStyle}"
+                                Margin="10,0,0,0"/>
+                    </StackPanel>
+
+                </StackPanel>
+
+                <!-- ADB Path -->
+                <StackPanel x:Name="AdbPathPanel" Orientation="Horizontal" Margin="0,2,0,2" Visibility="Collapsed" >
+                    <TextBlock Text="ADB Path:" Width="120" VerticalAlignment="Center"/>
+                    <TextBox x:Name="TxtAdbPath" Width="280" Margin="0,0,5,0"/>
+                    <Button Content="Browse" Click="BrowseAdb" Style="{StaticResource ModernButtonStyle}"/>
+                </StackPanel>
+
+                <!-- Scrcpy Path -->
+                <StackPanel x:Name="ScrcpyPathPanel" Orientation="Horizontal" Margin="0,2,0,2" Visibility="Collapsed">
+                    <TextBlock Text="Scrcpy Path:" Width="120" VerticalAlignment="Center"/>
+                    <TextBox x:Name="TxtScrcpyPath" Width="280" Margin="0,0,5,0"/>
+                    <Button Content="Browse" Click="BrowseScrcpy" Style="{StaticResource ModernButtonStyle}"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
+                    <TextBlock Text="Background:" Width="120" VerticalAlignment="Center"/>
+                    <Button x:Name="BtnPickBackground" Width="150" Content="Pick Color" 
+        Click="BtnPickBackground_Click" Style="{StaticResource ColorButtonStyle}"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
+                    <TextBlock Text="Foreground:" Width="120" VerticalAlignment="Center"/>
+                    <Button x:Name="BtnPickForeground" Width="150" Content="Pick Color" 
+        Click="BtnPickForeground_Click" Style="{StaticResource ColorButtonStyle}"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
+                    <TextBlock Text="Hover:" Width="120" VerticalAlignment="Center"/>
+                    <Button x:Name="BtnPickHover" Width="150" Content="Pick Color" 
+        Click="BtnPickHover_Click" Style="{StaticResource ColorButtonStyle}"/>
+                </StackPanel>
+
+
+
+                <!-- Save Button -->
+                <Button x:Name="SaveButton" Content="Save"
+                        Width="109"
+                        Height="36"
+                        HorizontalAlignment="Center"
+                        Style="{StaticResource ModernButtonStyle}"
+                        Click="SaveConfiguration"
+                        Margin="0,8,0,0"
+                        Visibility="Collapsed"/>
+
+
+            </StackPanel>
+            
+        </Border>
+    </Grid>
+</UserControl>

@@ -1,0 +1,123 @@
+﻿<UserControl x:Class="YTDLApp.YTDLControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="300" d:DesignWidth="500"
+             Background="#661E1E1E">
+
+    <UserControl.Resources>
+        <!-- Modern Button Style (from FileSync) -->
+        <Style x:Key="ModernButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#5539cc"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#553fff"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#553fff"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#d3d3d3"/>
+                                <Setter Property="Foreground" Value="#777"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Checkbox Style (from FileSync) -->
+        <Style x:Key="ToggleCheckBoxStyle" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Border x:Name="border"
+                                Background="Red"
+                                CornerRadius="6"
+                                BorderThickness="0"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="Green"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Opacity" Value="0.8"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#555"/>
+                                <Setter Property="Foreground" Value="#aaa"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Label Style -->
+        <Style TargetType="Label">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- URL -->
+            <RowDefinition Height="Auto"/>
+            <!-- Type -->
+            <RowDefinition Height="Auto"/>
+            <!-- Background -->
+            <RowDefinition Height="Auto"/>
+            <!-- Send Button -->
+            <RowDefinition Height="*"/>
+            <!-- Output -->
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="100"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- YouTube URL -->
+        <Label Grid.Row="0" Grid.Column="0" Content="YouTube URL:" VerticalAlignment="Center"/>
+        <TextBox Grid.Row="0" Grid.Column="1" Name="txtUrl" Margin="5"/>
+
+        <!-- Type -->
+        <Label Grid.Row="1" Grid.Column="0" Content="Type:" VerticalAlignment="Center"/>
+        <ComboBox Grid.Row="1" Grid.Column="1" Name="cmbType" Margin="5">
+            <ComboBoxItem Content="audio"/>
+            <ComboBoxItem Content="video"/>
+            <ComboBoxItem Content="command"/>
+        </ComboBox>
+
+        <!-- Background -->
+        <Label Grid.Row="2" Grid.Column="0" Content="Background:" VerticalAlignment="Center"/>
+        <CheckBox Grid.Row="2" Grid.Column="1" Name="chkBackground" Margin="5" Content="Run in background" Style="{StaticResource ToggleCheckBoxStyle}"/>
+
+        <!-- Send Button -->
+        <Button Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Name="btnSend" Content="Send to YTDL" Height="30" Margin="5" Style="{StaticResource ModernButtonStyle}" Click="btnSend_Click"/>
+    </Grid>
+</UserControl>

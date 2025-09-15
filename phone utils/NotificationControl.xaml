@@ -1,0 +1,41 @@
+﻿<UserControl x:Class="phone_utils.NotificationControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="#661E1E1E">
+
+    <DockPanel LastChildFill="True">
+        <!-- Header -->
+        <Border Background="#FF1F1F1F" Padding="15,10" DockPanel.Dock="Top">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Notifications" 
+                           FontSize="18" FontWeight="Bold" 
+                           Foreground="White" VerticalAlignment="Center"/>
+                <Button Grid.Column="1" Name="BtnRefreshNotifications" 
+                       Content="🔄" FontSize="16" 
+                       Background="Transparent" Foreground="White"
+                       BorderThickness="0" Padding="10,5"
+                       Click="BtnRefreshNotifications_Click"/>
+            </Grid>
+        </Border>
+
+        <!-- Status Bar -->
+        <Border Background="#FF1F1F1F" Padding="10,5" DockPanel.Dock="Bottom">
+            <TextBlock Name="StatusText" Text="Loading notifications..." 
+                       Foreground="#FF888888" FontSize="12"/>
+        </Border>
+
+        <!-- Notifications List -->
+        <ScrollViewer Background="#FF121212" 
+                      VerticalScrollBarVisibility="Hidden"
+                      HorizontalScrollBarVisibility="Disabled"
+                      PanningMode="VerticalOnly">
+            <StackPanel Name="NotificationPanel" Margin="10">
+                <!-- Notifications added programmatically -->
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

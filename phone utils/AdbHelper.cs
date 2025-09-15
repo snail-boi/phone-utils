@@ -1,0 +1,76 @@
+﻿using System;
+using System.Diagnostics;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+
+namespace phone_utils
+{
+    public static class AdbHelper
+    {
+        /// <summary>
+        /// Runs ADB command without capturing output
+        /// </summary>
+        /// <param name="adbPath">Path to adb.exe</param>
+        /// <param name="args">ADB command arguments</param>
+        /// <returns>Task representing the async operation</returns>
+        public static Task RunAdbAsync(string adbPath, string args)
+        {
+            return Task.Run(() =>
+            {
+                var psi = new ProcessStartInfo(adbPath, args)
+                {
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                try
+                {
+                    var proc = Process.Start(psi);
+                    proc.WaitForExit();
+                }
+                catch (Exception ex)
+                {
+                    // Silently ignore errors as in original code
+                }
+            });
+        }
+
+        /// <summary>
+        /// Runs ADB command and captures the output
+        /// </summary>
+        /// <param name="adbPath">Path to adb.exe</param>
+        /// <param name="args">ADB command arguments</param>
+        /// <returns>Task with the command output as string</returns>
+        public static Task<string> RunAdbCaptureAsync(string adbPath, string args)
+        {
+            return Task.Run(() =>
+            {
+                var psi = new ProcessStartInfo(adbPath, args)
+                {
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    StandardOutputEncoding = Encoding.UTF8,
+                    StandardErrorEncoding = Encoding.UTF8
+                };
+
+                try
+                {
+                    var proc = Process.Start(psi);
+                    string output = proc.StandardOutput.ReadToEnd();
+                    proc.WaitForExit();
+                    return output;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"ADB capture error: {ex.Message}", "ADB Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return string.Empty;
+                }
+            });
+        }
+    }
+}
