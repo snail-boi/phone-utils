@@ -91,13 +91,12 @@ namespace phone_utils
             }
         }
 
-        public void ReloadConfiguration()
+        public async Task ReloadConfiguration()
         {
             LoadConfiguration();
             EnableButtons(true);
             StatusText.Foreground = new SolidColorBrush(Colors.Red);
-            DetectDeviceAsync();
-            UpdateBatteryStatusAsync();
+            await DetectDeviceAsync();
         }
 
         public string GetPincode() => config.SelectedDevicePincode;
@@ -454,10 +453,6 @@ namespace phone_utils
 
             BtnScrcpyOptions.IsEnabled = enable && scrcpyAvailable && adbAvailable;
 
-            if (adbAvailable)
-            {
-                string output = RunAdbCaptureAsync($"-s {currentDevice} shell pm list packages com.deniscerri.ytdl").Result;
-            }
             BtnSyncMusic.IsEnabled = enable && adbAvailable;
             Intent.IsEnabled = enable && adbAvailable;
             if(devmode == true)
