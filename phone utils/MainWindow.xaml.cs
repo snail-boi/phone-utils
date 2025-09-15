@@ -151,13 +151,13 @@ namespace phone_utils
                 SetStatus("Please add device under device settings.", Colors.Red);
                 return;
             }
-
-            await RunAdbAsync($"connect {wifiDevice}");
+            if(config.SelectedDeviceWiFi != "None")
+                await RunAdbAsync($"connect {wifiDevice}");
             var devices = await RunAdbCaptureAsync("devices");
             var deviceList = devices.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
             if (await CheckUsbDeviceAsync(deviceList)) return;
-            if (await CheckWifiDeviceAsync(deviceList)) return;
+            if (await CheckWifiDeviceAsync(deviceList) && config.SelectedDeviceWiFi != "None") return;
 
             SetStatus("No selected device found!", Colors.Red);
             EnableButtons(false);
@@ -173,9 +173,12 @@ namespace phone_utils
 
             SetStatus($"USB device connected: {config.SelectedDeviceName}", Colors.Green);
             currentDevice = config.SelectedDeviceUSB;
-            EnableButtons(true);
 
-            await SetupWifiOverUsbAsync(deviceList);
+            if (config.SelectedDeviceWiFi != "None")
+            {
+                await SetupWifiOverUsbAsync(deviceList);
+            }
+            EnableButtons(true);
             await UpdateBatteryStatusAsync();
             await UpdateForegroundAppAsync();
 
@@ -541,7 +544,6 @@ namespace phone_utils
             EnableButtons(true);
             StatusText.Foreground = new SolidColorBrush(Colors.Red);
             DetectDeviceAsync();
-            UpdateBatteryStatusAsync();
         }
         #endregion
 

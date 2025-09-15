@@ -205,20 +205,44 @@ namespace phone_utils
                 return;
             }
 
+            // Try to get IP (Wi-Fi)
             string ip = GetDeviceIp(adbPath, serial);
+            string tcpIpWithPort;
+
             if (string.IsNullOrEmpty(ip))
             {
-                MessageBox.Show("Could not detect IP address. Ensure device is connected to Wi-Fi.", "IP Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
+                // Ask user if they want to save as USB-only
+                var result = MessageBox.Show(
+                    "No Wi-Fi IP detected for this device. Do you want to save it as USB only?",
+                    "IP Not Found",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question
+                );
 
-            string tcpIpWithPort = $"{ip}:5555";
+                if (result != MessageBoxResult.Yes)
+                {
+                    // Abort saving if user does not confirm
+                    return;
+                }
+
+                tcpIpWithPort = "None";
+            }
+            else
+            {
+                tcpIpWithPort = $"{ip}:5555";
+            }
 
             string name = TxtDeviceName.Text.Trim();
             if (string.IsNullOrWhiteSpace(name))
             {
                 MessageBox.Show("Please enter a device name.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
+            }
+
+            // Append "(USB only)" if no IP
+            if (tcpIpWithPort == "None" && !name.EndsWith("(USB only)", StringComparison.OrdinalIgnoreCase))
+            {
+                name += " (USB only)";
             }
 
             var newDevice = new DeviceConfig
@@ -230,7 +254,7 @@ namespace phone_utils
                 Pincode = TxtPincode.Password
             };
 
-            // Remove existing device with same serial to avoid duplicates
+            // Remove existing device with same serial
             var existing = _config.SavedDevices.FirstOrDefault(d => d.UsbSerial == serial);
             if (existing != null)
                 _config.SavedDevices.Remove(existing);
@@ -238,7 +262,7 @@ namespace phone_utils
             _config.SavedDevices.Add(newDevice);
             UpdateSelectedDevice(newDevice);
 
-            // Update ComboBox safely
+            // Refresh ComboBox
             DeviceSelector.SelectionChanged -= DeviceSelector_SelectionChanged;
             DeviceSelector.ItemsSource = null;
             DeviceSelector.ItemsSource = _config.SavedDevices;
@@ -247,8 +271,14 @@ namespace phone_utils
 
             SaveConfig(false);
 
-            MessageBox.Show($"Device saved successfully. Detected IP: {tcpIpWithPort}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            string msg = tcpIpWithPort == "None"
+                ? "Device saved successfully as USB only."
+                : $"Device saved successfully. Detected IP: {tcpIpWithPort}";
+
+            MessageBox.Show(msg, "Success", MessageBoxButton.OK, MessageBoxImage.Information);
         }
+
+
 
 
         private void UpdateSelectedDevice(DeviceConfig device)
