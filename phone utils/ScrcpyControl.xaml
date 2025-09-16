@@ -120,8 +120,8 @@
                         <CheckBox x:Name="ChkPlaybackAudio" Content="Playback Audio" Margin="2"
           Checked="ChkAudio_Checked" Unchecked="ChkAudio_Unchecked" Style="{StaticResource ToggleCheckBoxStyle}"/>
 
-                        <CheckBox x:Name="empty" Content="huh" Margin="2" Visibility="Hidden"/>
-                        <CheckBox x:Name="Chkaudiobuffer" Content="Audio buffer Size:" Margin="2,10,2,4" Style="{StaticResource ToggleCheckBoxStyle}"/>
+                        <CheckBox x:Name="ChkTop" Content="Always on top" Margin="2" Style="{StaticResource ToggleCheckBoxStyle}"/>
+                        <CheckBox x:Name="Chkaudiobuffer" Content="Audio buffer Size:" Margin="2,2,2,4" Style="{StaticResource ToggleCheckBoxStyle}"/>
                         <!-- New Checkbox -->
                         <CheckBox x:Name="ChkMaxSize" Content="Limit Max Size:" IsChecked="True" Margin="2,3,2,3" Style="{StaticResource ToggleCheckBoxStyle}"/>
                         <Button x:Name="camera" Click="BtnCamera_click" Content="Camera mode:" Margin="2,4,2,6" Style="{StaticResource ModernButtonStyle}"/>

@@ -39,6 +39,7 @@ namespace phone_utils
             LoadConfiguration();
             DetectDeviceAsync();
             UpdateBackgroundImage();
+            ShowNotificationsAsDefault();
 
             connectionCheckTimer = new DispatcherTimer
             {
@@ -105,7 +106,9 @@ namespace phone_utils
         #region Background
         private void UpdateBackgroundImage()
         {
-            string imagePath = @"";
+            string imagePath = string.IsNullOrEmpty(config.Paths.Background)
+                ? ""
+                : config.Paths.Background;
             try
             {
                 var bitmap = new BitmapImage();
@@ -549,7 +552,7 @@ namespace phone_utils
 
         public static Task<string> RunAdbCaptureAsync(string args) => AdbHelper.RunAdbCaptureAsync(ADB_PATH, args);
 
-        public Task RunScrcpyAsync(string args, bool lockAfterExit, bool toggle)
+        public Task RunScrcpyAsync(string args)
         {
             DeviceStatusText.Text = args.Contains("--no-audio")
                 ? "Device Status: Casting without audio"
@@ -565,13 +568,6 @@ namespace phone_utils
 
                 try
                 {
-                    if (toggle)
-                    {
-                        foreach (var proc in Process.GetProcessesByName("scrcpy"))
-                        {
-                            try { proc.Kill(); proc.WaitForExit(); } catch { }
-                        }
-                    }
 
                     var psi = new ProcessStartInfo
                     {
@@ -587,9 +583,6 @@ namespace phone_utils
 
                     while (!scrcpyProcess.HasExited)
                         await Task.Delay(500);
-
-                    if (lockAfterExit)
-                        await RunAdbAsync($"-s {currentDevice} shell input keyevent 26");
                 }
                 catch (Exception ex)
                 {

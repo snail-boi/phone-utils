@@ -51,6 +51,7 @@ namespace phone_utils
 
             TxtAdbPath.Text = _config.Paths.Adb;
             TxtScrcpyPath.Text = _config.Paths.Scrcpy;
+            TxtBackground.Text = _config.Paths.Background;
 
             ApplyButtonColors(_config.ButtonStyle);
 
@@ -94,6 +95,12 @@ namespace phone_utils
 
         private void BrowseAdb(object sender, RoutedEventArgs e) => TxtAdbPath.Text = BrowseFile("ADB Executable|adb.exe");
         private void BrowseScrcpy(object sender, RoutedEventArgs e) => TxtScrcpyPath.Text = BrowseFile("Scrcpy Executable|scrcpy.exe");
+        private void BrowseBackground(object sender, RoutedEventArgs e)
+        {
+            TxtBackground.Text = BrowseFile("Supported Images|*.jpg;*.png|Jpeg file(*.jpg)|*.jpg|Png file(*.png)|*.png|All files|*.*");
+            UpdateConfigFromUI();
+            SaveConfig(false);
+        }
         #endregion
 
         #region Config Save / Reload
@@ -107,6 +114,7 @@ namespace phone_utils
         {
             _config.Paths.Adb = TxtAdbPath.Text;
             _config.Paths.Scrcpy = TxtScrcpyPath.Text;
+            _config.Paths.Background = TxtBackground.Text;
 
             if (DeviceSelector.SelectedItem is DeviceConfig selDev)
             {
@@ -239,11 +247,6 @@ namespace phone_utils
                 return;
             }
 
-            // Append "(USB only)" if no IP
-            if (tcpIpWithPort == "None" && !name.EndsWith("(USB only)", StringComparison.OrdinalIgnoreCase))
-            {
-                name += " (USB only)";
-            }
 
             var newDevice = new DeviceConfig
             {
@@ -412,7 +415,12 @@ namespace phone_utils
             public string SelectedDevicePincode { get; set; } = string.Empty;
         }
 
-        public class PathsConfig { public string Adb { get; set; } = string.Empty; public string Scrcpy { get; set; } = string.Empty; }
+        public class PathsConfig 
+        { 
+            public string Adb { get; set; } = string.Empty;
+            public string Scrcpy { get; set; } = string.Empty; 
+            public string Background { get; set; } = string.Empty;
+        }
         public class FileSyncConfig { public string LocalDir { get; set; } = ""; public string RemoteDir { get; set; } = ""; public bool recursion { get; set; } = true; }
         public class ScrcpyConfig
         {
@@ -424,6 +432,7 @@ namespace phone_utils
             public bool StayAwake { get; set; } = true;
             public bool TurnScreenOff { get; set; } = true;
             public bool LockPhone { get; set; } = true;
+            public bool Top { get; set; } = false;
             public bool EnableHotkeys { get; set; } = true;
             public bool audiobuffer { get; set; } = false;
             public int AudioBufferSize { get; set; } = 100;

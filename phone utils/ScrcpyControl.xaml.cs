@@ -163,6 +163,7 @@ namespace phone_utils
             ChkMaxSize.IsChecked = settings.LimitMaxSize;
             TxtMaxSize.Text = settings.MaxSize.ToString();
             ChkStayAwake.IsChecked = settings.StayAwake;
+            ChkTop.IsChecked = settings.Top;
             ChkTurnScreenOff.IsChecked = settings.TurnScreenOff;
             ChkLockAfterExit.IsChecked = settings.LockPhone;
             ChkEnableHotkeys.IsChecked = settings.EnableHotkeys;
@@ -193,6 +194,7 @@ namespace phone_utils
             settings.MaxSize = int.TryParse(TxtMaxSize.Text, out int maxSize) ? maxSize : 2440;
             settings.StayAwake = ChkStayAwake.IsChecked == true;
             settings.TurnScreenOff = ChkTurnScreenOff.IsChecked == true;
+            settings.Top = ChkTop.IsChecked == true;
             settings.LockPhone = ChkLockAfterExit.IsChecked == true;
             settings.EnableHotkeys = ChkEnableHotkeys.IsChecked == true;
             settings.audiobuffer = Chkaudiobuffer.IsChecked == true;
@@ -210,23 +212,23 @@ namespace phone_utils
 
         #region Scrcpy Launch
 
-        private async Task LaunchScrcpyAsync(List<string> args, bool lockAfterExit = false, bool showWindow = true)
+        private async Task LaunchScrcpyAsync(List<string> args)
         {
             SaveCurrentSettings();
             string finalArgs = string.Join(" ", args);
-            await _main.RunScrcpyAsync(finalArgs, lockAfterExit, showWindow);
+            await _main.RunScrcpyAsync(finalArgs);
         }
 
         private async void BtnDisplay_click(object sender, RoutedEventArgs e)
         {
             var args = BuildScrcpyArgs(display: true);
-            await LaunchScrcpyAsync(args, lockAfterExit: false, showWindow: false);
+            await LaunchScrcpyAsync(args);
         }
 
         private async void BtnCamera_click(object sender, RoutedEventArgs e)
         {
             var args = BuildScrcpyArgs(camera: true);
-            await LaunchScrcpyAsync(args, lockAfterExit: false, showWindow: false);
+            await LaunchScrcpyAsync(args);
         }
 
         private async void BtnStartScrcpy_Click(object sender, RoutedEventArgs e)
@@ -238,14 +240,13 @@ namespace phone_utils
             }
 
             var args = BuildScrcpyArgs();
-            bool lockAfterExit = ChkLockAfterExit.IsChecked == true;
-            await LaunchScrcpyAsync(args, lockAfterExit, showWindow: true);
+            await LaunchScrcpyAsync(args);
         }
 
         private List<string> BuildScrcpyArgs(bool display = false, bool camera = false)
         {
             var args = new List<string>();
-
+            args.Add($"--window-title=\"{_appConfig.SelectedDeviceName}\"");
             if (camera)
             {
                 if (ChkNoAudio.IsChecked == true) args.Add("--no-audio");
@@ -287,6 +288,8 @@ namespace phone_utils
 
             if (ChkStayAwake.IsChecked == true) args.Add("--stay-awake");
             if (ChkTurnScreenOff.IsChecked == true) args.Add("--turn-screen-off");
+            if (ChkLockAfterExit.IsChecked == true && !camera && !display) args.Add("--power-off-on-close");
+            if (ChkTop.IsChecked == true) args.Add("--always-on-top");
             if (ChkMaxSize.IsChecked == true && int.TryParse(TxtMaxSize.Text, out int maxSize) && maxSize > 0)
                 args.Add($"--max-size={maxSize}");
             else if (ChkMaxSize.IsChecked == true)
@@ -298,8 +301,6 @@ namespace phone_utils
                 if (!string.IsNullOrWhiteSpace(CmbAndroidApps.Text))
                     args.Add($"--start-app={CmbAndroidApps.Text}");
             }
-
-            args.Add($"--window-title={_appConfig.SelectedDeviceName}");
 
             return args;
         }

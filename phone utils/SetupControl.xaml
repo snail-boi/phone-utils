@@ -261,6 +261,13 @@
                     <Button Content="Browse" Click="BrowseScrcpy" Style="{StaticResource ModernButtonStyle}"/>
                 </StackPanel>
 
+                <!-- Scrcpy Path -->
+                <StackPanel x:Name="Background" Orientation="Horizontal" Margin="0,2,0,2">
+                    <TextBlock Text="Background Path:" Width="120" VerticalAlignment="Center"/>
+                    <TextBox x:Name="TxtBackground" Width="280" Margin="0,0,5,0"/>
+                    <Button Content="Browse" Click="BrowseBackground" Style="{StaticResource ModernButtonStyle}"/>
+                </StackPanel>
+
                 <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
                     <TextBlock Text="Background:" Width="120" VerticalAlignment="Center"/>
                     <Button x:Name="BtnPickBackground" Width="150" Content="Pick Color" 
