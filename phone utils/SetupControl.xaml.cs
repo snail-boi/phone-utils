@@ -145,54 +145,28 @@ namespace phone_utils
         #endregion
 
         #region Device Management
+        // make this stuff async later
         private string GetDeviceIp(string adbPath, string serial)
         {
-            try
-            {
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = adbPath,
-                    Arguments = $"-s {serial} shell ip -f inet addr show wlan0",
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
+            string output = AdbHelper.RunAdb(adbPath, $"-s {serial} shell ip addr show wlan0");
 
-                using var process = new Process { StartInfo = startInfo };
-                process.Start();
-                string output = process.StandardOutput.ReadToEnd();
-                process.WaitForExit();
-
-                var match = Regex.Match(output, @"inet (\d+\.\d+\.\d+\.\d+)/");
-                if (match.Success) return match.Groups[1].Value;
-            }
-            catch { }
+            var match = Regex.Match(output, @"inet (\d+\.\d+\.\d+\.\d+)/");
+            if (match.Success) return match.Groups[1].Value;
 
             return null;
         }
-
+        // make this stuff async later
         private string GetFirstUsbSerial(string adbPath)
         {
-            try
+            string output = AdbHelper.RunAdb(adbPath, "devices");
+            if (MainWindow.debugmode)
             {
-                var devicesInfo = new ProcessStartInfo
-                {
-                    FileName = adbPath,
-                    Arguments = "devices",
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-
-                using var process = new Process { StartInfo = devicesInfo };
-                process.Start();
-                string output = process.StandardOutput.ReadToEnd();
-                process.WaitForExit();
-
-                foreach (var line in output.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
-                    if (line.EndsWith("\tdevice")) return line.Split('\t')[0];
+                Debug.WriteLine($"ADB devices output:\n{output}");
             }
-            catch { }
+            ;
+
+            foreach (var line in output.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
+                if (line.EndsWith("\tdevice")) return line.Split('\t')[0];
 
             return null;
         }

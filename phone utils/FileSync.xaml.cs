@@ -188,7 +188,7 @@ namespace phone_utils
 
         private static Task<string> RunAdbCaptureAsync(string args)
         {
-            return MainWindow.RunAdbCaptureAsync(args);
+            return AdbHelper.RunAdbCaptureAsync(args);
         }
 
 

@@ -11,14 +11,13 @@ namespace phone_utils
         /// <summary>
         /// Runs ADB command without capturing output
         /// </summary>
-        /// <param name="adbPath">Path to adb.exe</param>
         /// <param name="args">ADB command arguments</param>
         /// <returns>Task representing the async operation</returns>
-        public static Task RunAdbAsync(string adbPath, string args)
+        public static Task RunAdbAsync(string args)
         {
             return Task.Run(() =>
             {
-                var psi = new ProcessStartInfo(adbPath, args)
+                var psi = new ProcessStartInfo(MainWindow.ADB_PATH, args)
                 {
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
@@ -33,7 +32,8 @@ namespace phone_utils
                 }
                 catch (Exception ex)
                 {
-                    // Silently ignore errors as in original code
+                    if (MainWindow.debugmode)
+                        Debug.WriteLine($"ADB error: {ex.Message}");
                 }
             });
         }
@@ -41,14 +41,13 @@ namespace phone_utils
         /// <summary>
         /// Runs ADB command and captures the output
         /// </summary>
-        /// <param name="adbPath">Path to adb.exe</param>
         /// <param name="args">ADB command arguments</param>
         /// <returns>Task with the command output as string</returns>
-        public static Task<string> RunAdbCaptureAsync(string adbPath, string args)
+        public static Task<string> RunAdbCaptureAsync(string args)
         {
             return Task.Run(() =>
             {
-                var psi = new ProcessStartInfo(adbPath, args)
+                var psi = new ProcessStartInfo(MainWindow.ADB_PATH, args)
                 {
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
@@ -67,10 +66,44 @@ namespace phone_utils
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"ADB capture error: {ex.Message}", "ADB Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return string.Empty;
+                    if (MainWindow.debugmode)
+                    {
+                        Debug.WriteLine($"ADB error: {ex.Message}");
+                        return ex.ToString();
+                    }
+                    return "";
                 }
             });
+        }
+        public static string RunAdb(string adbPath, string args)
+        {
+            try
+            {
+                var psi = new ProcessStartInfo(adbPath, args)
+                {
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    StandardOutputEncoding = Encoding.UTF8,
+                    StandardErrorEncoding = Encoding.UTF8
+                };
+
+                var proc = new Process { StartInfo = psi };
+                proc.Start();
+                string output = proc.StandardOutput.ReadToEnd();
+                proc.WaitForExit();
+                return output;
+            }
+            catch (Exception ex)
+            {
+                if (MainWindow.debugmode)
+                {
+                    Debug.WriteLine($"ADB error: {ex.Message}");
+                    return ex.ToString();
+                }
+                return "";
+            }
         }
     }
 }

@@ -27,7 +27,8 @@ namespace phone_utils
         private DispatcherTimer connectionCheckTimer;
         private HashSet<int> shownBatteryWarnings = new HashSet<int>();
         private bool wasCharging = false;
-        private bool devmode;
+        public bool devmode;
+        public static bool debugmode;
         #endregion
 
         #region Constructor
@@ -154,8 +155,8 @@ namespace phone_utils
                 return;
             }
             if(config.SelectedDeviceWiFi != "None")
-                await RunAdbAsync($"connect {wifiDevice}");
-            var devices = await RunAdbCaptureAsync("devices");
+                await AdbHelper.RunAdbAsync($"connect {wifiDevice}");
+            var devices = await AdbHelper.RunAdbCaptureAsync("devices");
             var deviceList = devices.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
             if (await CheckUsbDeviceAsync(deviceList)) return;
@@ -194,8 +195,8 @@ namespace phone_utils
             bool wifiAlreadyConnected = deviceList.Any(l => l.StartsWith(config.SelectedDeviceWiFi));
             if (wifiAlreadyConnected) return;
 
-            await RunAdbAsync($"-s {config.SelectedDeviceUSB} tcpip 5555");
-            var connectResult = await RunAdbCaptureAsync($"connect {config.SelectedDeviceWiFi}");
+            await AdbHelper.RunAdbAsync($"-s {config.SelectedDeviceUSB} tcpip 5555");
+            var connectResult = await AdbHelper.RunAdbCaptureAsync($"connect {config.SelectedDeviceWiFi}");
 
             StatusText.Text += connectResult.Contains("connected")
                 ? " | Wi-Fi port has been set up."
@@ -235,7 +236,7 @@ namespace phone_utils
 
             try
             {
-                var output = await RunAdbCaptureAsync($"-s {currentDevice} shell dumpsys battery");
+                var output = await AdbHelper.RunAdbCaptureAsync($"-s {currentDevice} shell dumpsys battery");
                 var batteryInfo = ParseBatteryInfo(output);
 
                 if (batteryInfo.Level < 0)
@@ -370,7 +371,7 @@ namespace phone_utils
                     return;
                 }
 
-                string output = await RunAdbCaptureAsync($"-s {currentDevice} shell dumpsys media_session");
+                string output = await AdbHelper.RunAdbCaptureAsync($"-s {currentDevice} shell dumpsys media_session");
 
                 if (string.IsNullOrWhiteSpace(output))
                 {
@@ -548,10 +549,6 @@ namespace phone_utils
         #region Utility Methods
         private void ShowNotificationsAsDefault() => ContentHost.Content = new NotificationControl(this, currentDevice);
 
-        public Task RunAdbAsync(string args) => AdbHelper.RunAdbAsync(ADB_PATH, args);
-
-        public static Task<string> RunAdbCaptureAsync(string args) => AdbHelper.RunAdbCaptureAsync(ADB_PATH, args);
-
         public Task RunScrcpyAsync(string args)
         {
             DeviceStatusText.Text = args.Contains("--no-audio")
@@ -591,7 +588,7 @@ namespace phone_utils
             });
         }
 
-        public async Task PerformTapSequenceAsync(string device) => await RunAdbAsync($"-s {device} shell input text {config.SelectedDevicePincode}");
+        public async Task PerformTapSequenceAsync(string device) => await AdbHelper.RunAdbAsync($"-s {device} shell input text {config.SelectedDevicePincode}");
 
         private void CloseAllAdbProcesses()
         {

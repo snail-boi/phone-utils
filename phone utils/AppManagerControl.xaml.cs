@@ -31,7 +31,7 @@ namespace phone_utils
             try
             {
                 TxtStatus.Text += "Refreshing installed apps...\n";
-                var output = await MainWindow.RunAdbCaptureAsync($"-s {_device} shell pm list packages");
+                var output = await AdbHelper.RunAdbCaptureAsync($"-s {_device} shell pm list packages");
                 var packages = output.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
                                      .Where(l => l.StartsWith("package:"))
                                      .Select(l => l.Substring(8))
@@ -68,7 +68,7 @@ namespace phone_utils
                 try
                 {
                     TxtStatus.Text += $"Installing {ofd.FileName}...\n";
-                    var output = await MainWindow.RunAdbCaptureAsync($"-s {_device} install \"{ofd.FileName}\"");
+                    var output = await AdbHelper.RunAdbCaptureAsync($"-s {_device} install \"{ofd.FileName}\"");
                     TxtStatus.Text += output + "\n";
                     RefreshInstalledApps();
                 }
@@ -89,7 +89,7 @@ namespace phone_utils
                 try
                 {
                     TxtStatus.Text += $"Uninstalling {package}...\n";
-                    var output = await MainWindow.RunAdbCaptureAsync($"-s {_device} uninstall {package}");
+                    var output = await AdbHelper.RunAdbCaptureAsync($"-s {_device} uninstall {package}");
                     TxtStatus.Text += output + "\n";
                     RefreshInstalledApps();
                 }
@@ -108,7 +108,7 @@ namespace phone_utils
             try
             {
                 TxtStatus.Text += $"Opening {package}...\n";
-                var output = await MainWindow.RunAdbCaptureAsync($"-s {_device} shell monkey -p {package} -c android.intent.category.LAUNCHER 1");
+                var output = await AdbHelper.RunAdbCaptureAsync($"-s {_device} shell monkey -p {package} -c android.intent.category.LAUNCHER 1");
                 TxtStatus.Text += output + "\n";
             }
             catch (Exception ex)
@@ -156,7 +156,7 @@ namespace phone_utils
                     try
                     {
                         TxtStatus.Text += $"Installing {file} via drag-and-drop...\n";
-                        var output = await MainWindow.RunAdbCaptureAsync($"-s {_device} install \"{file}\"");
+                        var output = await AdbHelper.RunAdbCaptureAsync($"-s {_device} install \"{file}\"");
                         TxtStatus.Text += output + "\n";
                         RefreshInstalledApps();
                     }

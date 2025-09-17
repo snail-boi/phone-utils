@@ -41,7 +41,7 @@ namespace YTDLApp
 
         public Task RunAdbAsync(string args)
         {
-            return AdbHelper.RunAdbAsync(_ADB_PATH, args);
+            return AdbHelper.RunAdbAsync(args);
         }
 
         private async void btnSend_Click(object sender, RoutedEventArgs e)

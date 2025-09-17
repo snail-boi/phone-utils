@@ -80,7 +80,7 @@ namespace phone_utils
         private async Task RunAdbKeyEvent(int keyCode)
         {
             if (!_hotkeysEnabled || string.IsNullOrEmpty(_device)) return;
-            await _main.RunAdbAsync($"-s {_device} shell input keyevent {keyCode}");
+            await AdbHelper.RunAdbAsync($"-s {_device} shell input keyevent {keyCode}");
         }
 
         private async void OnInsertPressed()
@@ -92,7 +92,7 @@ namespace phone_utils
         private async Task LaunchApp(string packageName)
         {
             if (!_hotkeysEnabled || string.IsNullOrEmpty(_device)) return;
-            await _main.RunAdbAsync($"-s {_device} shell monkey -p {packageName} -c android.intent.category.LAUNCHER 1");
+            await AdbHelper.RunAdbAsync($"-s {_device} shell monkey -p {packageName} -c android.intent.category.LAUNCHER 1");
         }
 
         private void ChkEnableHotkeys_Checked(object sender, RoutedEventArgs e) => ToggleHotkeys(true);
@@ -316,7 +316,7 @@ namespace phone_utils
 
             try
             {
-                var output = await MainWindow.RunAdbCaptureAsync($"-s {_device} shell pm list packages");
+                var output = await AdbHelper.RunAdbCaptureAsync($"-s {_device} shell pm list packages");
                 var packages = output.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
                                      .Where(l => l.StartsWith("package:"))
                                      .Select(l => l.Substring(8))

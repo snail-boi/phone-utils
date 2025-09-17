@@ -66,7 +66,7 @@ namespace phone_utils
             try
             {
                 // Get notification dump from Android
-                string output = await MainWindow.RunAdbCaptureAsync($"-s {currentDevice} shell dumpsys notification --noredact");
+                string output = await AdbHelper.RunAdbCaptureAsync($"-s {currentDevice} shell dumpsys notification --noredact");
 
                 // Parse the notification dump
                 notifications = ParseNotificationDump(output);
