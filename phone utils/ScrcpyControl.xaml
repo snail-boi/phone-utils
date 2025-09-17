@@ -4,42 +4,42 @@
              Background="#661E1E1E">
 
     <UserControl.Resources>
-<!-- Modern Button Style -->
-<Style x:Key="ModernButtonStyle" TargetType="Button">
-    <Setter Property="Background" Value="{DynamicResource ButtonBackground}"/>
-    <Setter Property="Foreground" Value="{DynamicResource ButtonForeground}"/>
-    <Setter Property="FontWeight" Value="SemiBold"/>
-    <Setter Property="FontSize" Value="14"/>
-    <Setter Property="Padding" Value="6,4"/>
-    <Setter Property="Margin" Value="4"/>
-    <Setter Property="BorderThickness" Value="0"/>
-    <Setter Property="Cursor" Value="Hand"/>
-    <Setter Property="Template">
-        <Setter.Value>
-            <ControlTemplate TargetType="Button">
-                <Border x:Name="border"
+        <!-- Modern Button Style -->
+        <Style x:Key="ModernButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource ButtonBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ButtonForeground}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
                         Background="{TemplateBinding Background}"
                         CornerRadius="6">
-                    <ContentPresenter HorizontalAlignment="Center"
+                            <ContentPresenter HorizontalAlignment="Center"
                                       VerticalAlignment="Center"
                                       RecognizesAccessKey="True"/>
-                </Border>
-                <ControlTemplate.Triggers>
-                    <Trigger Property="IsMouseOver" Value="True">
-                        <Setter TargetName="border" Property="Background" Value="{DynamicResource ButtonHover}"/>
-                    </Trigger>
-                    <Trigger Property="IsPressed" Value="True">
-                        <Setter TargetName="border" Property="Background" Value="{DynamicResource ButtonHover}"/>
-                    </Trigger>
-                    <Trigger Property="IsEnabled" Value="False">
-                        <Setter TargetName="border" Property="Background" Value="#d3d3d3"/>
-                        <Setter Property="Foreground" Value="#777"/>
-                    </Trigger>
-                </ControlTemplate.Triggers>
-            </ControlTemplate>
-        </Setter.Value>
-    </Setter>
-</Style>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ButtonHover}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ButtonHover}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#d3d3d3"/>
+                                <Setter Property="Foreground" Value="#777"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style x:Key="ToggleCheckBoxStyle" TargetType="CheckBox">
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -122,7 +122,7 @@
 
                         <CheckBox x:Name="ChkTop" Content="Always on top" Margin="2" Style="{StaticResource ToggleCheckBoxStyle}"/>
                         <CheckBox x:Name="Chkaudiobuffer" Content="Audio buffer Size:" Margin="2,2,2,4" Style="{StaticResource ToggleCheckBoxStyle}"/>
-                        <!-- New Checkbox -->
+                        <CheckBox x:Name="Chkvideobuffer" Content="Video buffer Size:" Margin="2,2,2,4" Style="{StaticResource ToggleCheckBoxStyle}"/>
                         <CheckBox x:Name="ChkMaxSize" Content="Limit Max Size:" IsChecked="True" Margin="2,3,2,3" Style="{StaticResource ToggleCheckBoxStyle}"/>
                         <Button x:Name="camera" Click="BtnCamera_click" Content="Camera mode:" Margin="2,4,2,6" Style="{StaticResource ModernButtonStyle}"/>
                         <Button x:Name="BtnDisplay" Click="BtnDisplay_click" Content="virtual display:" Margin="2,3,2,4" Style="{StaticResource ModernButtonStyle}"/>
@@ -139,7 +139,9 @@
                         <CheckBox x:Name="ChkEnableHotkeys" Content="Enable Global Hotkeys" IsChecked="True" Margin="2" 
                                   Checked="ChkEnableHotkeys_Checked" Unchecked="ChkEnableHotkeys_Unchecked" Style="{StaticResource ToggleCheckBoxStyle}"/>
 
-                        <TextBox x:Name="TxtAudioBuffer" Text="200"
+                        <TextBox x:Name="TxtAudioBuffer" Text="50"
+                                 VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Margin="2" Height="25"/>
+                        <TextBox x:Name="TxtVideoBuffer" Text="50"
                                  VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Margin="2" Height="25"/>
                         <TextBox x:Name="TxtMaxSize" Text="2440"
                                  VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Margin="2" Height="25"/>

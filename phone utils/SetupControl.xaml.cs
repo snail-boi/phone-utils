@@ -145,33 +145,34 @@ namespace phone_utils
         #endregion
 
         #region Device Management
-        // make this stuff async later
-        private string GetDeviceIp(string adbPath, string serial)
+        private async Task<string> GetDeviceIpAsync(string serial)
         {
-            string output = AdbHelper.RunAdb(adbPath, $"-s {serial} shell ip addr show wlan0");
+            string output = await AdbHelper.RunAdbCaptureAsync($"-s {serial} shell ip addr show wlan0");
 
             var match = Regex.Match(output, @"inet (\d+\.\d+\.\d+\.\d+)/");
-            if (match.Success) return match.Groups[1].Value;
-
-            return null;
+            return match.Success ? match.Groups[1].Value : null;
         }
-        // make this stuff async later
-        private string GetFirstUsbSerial(string adbPath)
+
+        private async Task<string> GetFirstUsbSerialAsync()
         {
-            string output = AdbHelper.RunAdb(adbPath, "devices");
+            string output = await AdbHelper.RunAdbCaptureAsync("devices");
+
             if (MainWindow.debugmode)
             {
                 Debug.WriteLine($"ADB devices output:\n{output}");
             }
-            ;
 
             foreach (var line in output.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
-                if (line.EndsWith("\tdevice")) return line.Split('\t')[0];
+            {
+                if (line.EndsWith("\tdevice"))
+                    return line.Split('\t')[0];
+            }
 
             return null;
         }
 
-        private void SaveCurrentDevice(object sender, RoutedEventArgs e)
+
+        private async void SaveCurrentDevice(object sender, RoutedEventArgs e)
         {
             string adbPath = TxtAdbPath.Text;
             if (string.IsNullOrWhiteSpace(adbPath) || !File.Exists(adbPath))
@@ -180,7 +181,7 @@ namespace phone_utils
                 return;
             }
 
-            string serial = GetFirstUsbSerial(adbPath);
+            string serial = await GetFirstUsbSerialAsync();
             if (serial == null)
             {
                 MessageBox.Show("No USB device found. Ensure USB debugging is enabled.", "Device Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -188,7 +189,8 @@ namespace phone_utils
             }
 
             // Try to get IP (Wi-Fi)
-            string ip = GetDeviceIp(adbPath, serial);
+            string ip = await GetDeviceIpAsync(serial);
+
             string tcpIpWithPort;
 
             if (string.IsNullOrEmpty(ip))
@@ -409,7 +411,9 @@ namespace phone_utils
             public bool Top { get; set; } = false;
             public bool EnableHotkeys { get; set; } = true;
             public bool audiobuffer { get; set; } = false;
-            public int AudioBufferSize { get; set; } = 100;
+            public bool videobuffer { get; set; } = false;
+            public int AudioBufferSize { get; set; } = 50;
+            public int VideoBufferSize { get; set; } = 50;
             public int CameraType { get; set; } = 0;
             public string VirtualDisplayApp { get; set; } = "";
         }

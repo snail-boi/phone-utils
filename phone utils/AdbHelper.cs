@@ -75,35 +75,5 @@ namespace phone_utils
                 }
             });
         }
-        public static string RunAdb(string adbPath, string args)
-        {
-            try
-            {
-                var psi = new ProcessStartInfo(adbPath, args)
-                {
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = Encoding.UTF8,
-                    StandardErrorEncoding = Encoding.UTF8
-                };
-
-                var proc = new Process { StartInfo = psi };
-                proc.Start();
-                string output = proc.StandardOutput.ReadToEnd();
-                proc.WaitForExit();
-                return output;
-            }
-            catch (Exception ex)
-            {
-                if (MainWindow.debugmode)
-                {
-                    Debug.WriteLine($"ADB error: {ex.Message}");
-                    return ex.ToString();
-                }
-                return "";
-            }
-        }
     }
 }

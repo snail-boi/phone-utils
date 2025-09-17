@@ -168,7 +168,9 @@ namespace phone_utils
             ChkLockAfterExit.IsChecked = settings.LockPhone;
             ChkEnableHotkeys.IsChecked = settings.EnableHotkeys;
             Chkaudiobuffer.IsChecked = settings.audiobuffer;
+            Chkvideobuffer.IsChecked = settings.videobuffer;
             TxtAudioBuffer.Text = settings.AudioBufferSize.ToString();
+            TxtVideoBuffer.Text = settings.VideoBufferSize.ToString();
             CmbAndroidApps.Text = settings.VirtualDisplayApp ?? "";
             CmbCameraList.SelectedIndex = settings.CameraType;
 
@@ -198,7 +200,9 @@ namespace phone_utils
             settings.LockPhone = ChkLockAfterExit.IsChecked == true;
             settings.EnableHotkeys = ChkEnableHotkeys.IsChecked == true;
             settings.audiobuffer = Chkaudiobuffer.IsChecked == true;
-            settings.AudioBufferSize = int.TryParse(TxtAudioBuffer.Text, out int buffer) ? buffer : 100;
+            settings.videobuffer = Chkvideobuffer.IsChecked == true;
+            settings.AudioBufferSize = int.TryParse(TxtAudioBuffer.Text, out int abuffer) ? abuffer : 50;
+            settings.VideoBufferSize = int.TryParse(TxtVideoBuffer.Text, out int vbuffer) ? vbuffer : 50;
             settings.VirtualDisplayApp = CmbAndroidApps.Text;
             settings.CameraType = CmbCameraList.SelectedIndex;
 
@@ -247,32 +251,10 @@ namespace phone_utils
         {
             var args = new List<string>();
             args.Add($"--window-title=\"{_appConfig.SelectedDeviceName}\"");
-            if (camera)
-            {
-                if (ChkNoAudio.IsChecked == true) args.Add("--no-audio");
-                if (ChkPlaybackAudio.IsChecked == true) args.Add("--audio-source=playback");
-                if (Chkaudiobuffer.IsChecked == true && int.TryParse(TxtAudioBuffer.Text, out int buffer) && buffer > 0)
-                    args.Add($"--audio-buffer={buffer}");
-                else if (Chkaudiobuffer.IsChecked == true)
-                {
-                    MessageBox.Show("Invalid Audio Buffer value.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return args;
-                }
 
-                args.Add("--video-source=camera");
 
-                switch (CmbCameraList.Text)
-                {
-                    case "Front": args.Add("--camera-facing=front"); break;
-                    case "Back": args.Add("--camera-facing=back"); break;
-                    case "External": args.Add("--camera-facing=external"); break;
-                }
 
-                return args; // stop here, nothing else allowed
-            }
-
-            // Normal scrcpy / display mode
-            if (ChkAudioOnly.IsChecked == true)
+            if (ChkAudioOnly.IsChecked == true && !camera)
             {
                 args.Add("--no-video");
                 args.Add("--no-window");
@@ -285,9 +267,12 @@ namespace phone_utils
                 args.Add($"--audio-buffer={audioBuffer}");
             else if (Chkaudiobuffer.IsChecked == true)
                 MessageBox.Show("Invalid Audio Buffer value.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-
-            if (ChkStayAwake.IsChecked == true) args.Add("--stay-awake");
-            if (ChkTurnScreenOff.IsChecked == true) args.Add("--turn-screen-off");
+            if (Chkvideobuffer.IsChecked == true && int.TryParse(TxtVideoBuffer.Text, out int videoBuffer) && videoBuffer > 0)
+                args.Add($"--video-buffer={videoBuffer}");
+            else if (Chkaudiobuffer.IsChecked == true)
+                MessageBox.Show("Invalid Audio Buffer value.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+            if (ChkStayAwake.IsChecked == true && !camera) args.Add("--stay-awake");
+            if (ChkTurnScreenOff.IsChecked == true && !camera) args.Add("--turn-screen-off");
             if (ChkLockAfterExit.IsChecked == true && !camera && !display) args.Add("--power-off-on-close");
             if (ChkTop.IsChecked == true) args.Add("--always-on-top");
             if (ChkMaxSize.IsChecked == true && int.TryParse(TxtMaxSize.Text, out int maxSize) && maxSize > 0)
@@ -300,6 +285,18 @@ namespace phone_utils
                 args.Add($"--new-display={width}x{width * 9 / 16}");
                 if (!string.IsNullOrWhiteSpace(CmbAndroidApps.Text))
                     args.Add($"--start-app={CmbAndroidApps.Text}");
+            }
+
+
+            if (camera)
+            {
+                args.Add("--video-source=camera");
+                switch (CmbCameraList.Text)
+                {
+                    case "Front": args.Add("--camera-facing=front"); break;
+                    case "Back": args.Add("--camera-facing=back"); break;
+                    case "External": args.Add("--camera-facing=external"); break;
+                }
             }
 
             return args;

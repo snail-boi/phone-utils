@@ -62,7 +62,6 @@ namespace phone_utils
             );
 
             config = SetupControl.ConfigManager.Load(configPath);
-
             ADB_PATH = string.IsNullOrEmpty(config.Paths.Adb)
                 ? Path.Combine(exeDir, "adb.exe")
                 : config.Paths.Adb;
