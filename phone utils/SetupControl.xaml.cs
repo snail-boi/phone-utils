@@ -83,6 +83,7 @@ namespace phone_utils
             AdbPathPanel.Visibility = devVisibility;
             ScrcpyPathPanel.Visibility = devVisibility;
             SaveButton.Visibility = devVisibility;
+            ChkDevmode.IsChecked = enabled;
         }
         #endregion
 
@@ -141,6 +142,35 @@ namespace phone_utils
             {
                 MessageBox.Show($"Failed to save configuration: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void ChkDevmode_Checked(object sender, RoutedEventArgs e)
+        {
+            bool isChecked = ChkDevmode.IsChecked == true;
+            _config.SpecialOptions.DevMode = true;
+            var result = MessageBox.Show(
+                "Are you sure you want to enable devmode\n this has extra features, but they only work when specific apps are installed",
+                "",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question
+            );
+            if (result == MessageBoxResult.Yes)
+            {
+                ToggleDevMode(isChecked);
+                SaveConfig(false);
+            }
+            else
+            {
+                ChkDevmode.IsChecked = false;
+            }
+        }
+
+        private void ChkDevmode_Unchecked(object sender, RoutedEventArgs e)
+        {
+            bool isChecked = ChkDevmode.IsChecked == true;
+            _config.SpecialOptions.DevMode = false;
+            ToggleDevMode(isChecked);
+            SaveConfig(false);
         }
         #endregion
 

@@ -286,7 +286,10 @@
         Click="BtnPickHover_Click" Style="{StaticResource ColorButtonStyle}"/>
                 </StackPanel>
 
-
+                <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
+                    <CheckBox x:Name="ChkDevmode" Content="devmode" Margin="2" Foreground="white" 
+                              Checked="ChkDevmode_Checked" Unchecked="ChkDevmode_Unchecked"/>
+                </StackPanel>
 
                 <!-- Save Button -->
                 <Button x:Name="SaveButton" Content="Save"

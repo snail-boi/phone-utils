@@ -40,7 +40,6 @@ namespace phone_utils
             LoadConfiguration();
             DetectDeviceAsync();
             UpdateBackgroundImage();
-            ShowNotificationsAsDefault();
 
             connectionCheckTimer = new DispatcherTimer
             {
@@ -158,12 +157,13 @@ namespace phone_utils
             var devices = await AdbHelper.RunAdbCaptureAsync("devices");
             var deviceList = devices.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
+
             if (await CheckUsbDeviceAsync(deviceList)) return;
             if (await CheckWifiDeviceAsync(deviceList) && config.SelectedDeviceWiFi != "None") return;
 
             SetStatus("No selected device found!", Colors.Red);
             EnableButtons(false);
-            if (ContentHost.Content == null) ShowNotificationsAsDefault();
+
         }
 
         private async Task<bool> CheckUsbDeviceAsync(string[] deviceList)
@@ -183,7 +183,7 @@ namespace phone_utils
             EnableButtons(true);
             await UpdateBatteryStatusAsync();
             await UpdateForegroundAppAsync();
-
+            if (ContentHost.Content == null) ShowNotificationsAsDefault();
             return true;
         }
 
@@ -214,7 +214,7 @@ namespace phone_utils
             EnableButtons(true);
             await UpdateBatteryStatusAsync();
             await UpdateForegroundAppAsync();
-
+            if (ContentHost.Content == null) ShowNotificationsAsDefault();
             return true;
         }
 
