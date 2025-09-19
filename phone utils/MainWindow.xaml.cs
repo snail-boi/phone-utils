@@ -71,6 +71,7 @@ namespace phone_utils
 
             wifiDevice = config.SelectedDeviceWiFi;
             devmode = config.SpecialOptions != null && config.SpecialOptions.DevMode;
+            debugmode = config.SpecialOptions != null && config.SpecialOptions.ShowDebugMessages;
 
             // Load button colors from config
             try
@@ -145,7 +146,11 @@ namespace phone_utils
 
         private async Task DetectDeviceAsync()
         {
-            StatusText.Text = "Detecting selected device...";
+            if(debugmode == true)
+            {
+                StatusText.Foreground = new SolidColorBrush(Colors.Red);
+                StatusText.Text = "Detecting selected device...";
+            }
 
             if (!File.Exists(ADB_PATH))
             {
@@ -183,6 +188,9 @@ namespace phone_utils
             EnableButtons(true);
             await UpdateBatteryStatusAsync();
             await UpdateForegroundAppAsync();
+            if(devmode == false)
+                SetSubDeviceTextAsync();
+
             if (ContentHost.Content == null) ShowNotificationsAsDefault();
             return true;
         }
@@ -214,8 +222,37 @@ namespace phone_utils
             EnableButtons(true);
             await UpdateBatteryStatusAsync();
             await UpdateForegroundAppAsync();
+            SetSubDeviceTextAsync();
             if (ContentHost.Content == null) ShowNotificationsAsDefault();
             return true;
+        }
+
+        private async void SetSubDeviceTextAsync()
+        {
+            var sleepState = await AdbHelper.RunAdbCaptureAsync($"-s {currentDevice} shell dumpsys power");
+            var match = Regex.Match(sleepState, @"mWakefulness\s*=\s*(\w+)", RegexOptions.IgnoreCase);
+
+            bool isAwake = match.Success && match.Groups[1].Value.Equals("Awake", StringComparison.OrdinalIgnoreCase);
+
+
+            if (isAwake)
+            {
+                var input = await AdbHelper.RunAdbCaptureAsync("shell \"dumpsys window | sed -n '/mCurrentFocus/p'\"");
+                var match2 = Regex.Match(input, @"\su0\s([^\s/]+)");
+                if (match2.Success)
+                {
+                    string packageName = match2.Groups[1].Value;
+                    DeviceStatusText.Text = $"Current App: {packageName}";
+                }
+                else
+                {
+                    DeviceStatusText.Text = $"Current app not found";
+                }
+            }
+            else
+            {
+                DeviceStatusText.Text = $"Currently asleep";
+            }
         }
 
         private void SetStatus(string message, Color color)
@@ -537,57 +574,11 @@ namespace phone_utils
             }
         }
 
-        private void BtnRefresh_Click(object sender, RoutedEventArgs e)
-        {
-            EnableButtons(true);
-            StatusText.Foreground = new SolidColorBrush(Colors.Red);
-            DetectDeviceAsync();
-        }
+        private void BtnRefresh_Click(object sender, RoutedEventArgs e) => DetectDeviceAsync();
         #endregion
 
         #region Utility Methods
         private void ShowNotificationsAsDefault() => ContentHost.Content = new NotificationControl(this, currentDevice);
-
-        public Task RunScrcpyAsync(string args)
-        {
-            DeviceStatusText.Text = args.Contains("--no-audio")
-                ? "Device Status: Casting without audio"
-                : "Device Status: Casting with audio";
-
-            return Task.Run(async () =>
-            {
-                if (!File.Exists(SCRCPY_PATH))
-                {
-                    MessageBox.Show("scrcpy.exe not found!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
-                }
-
-                try
-                {
-
-                    var psi = new ProcessStartInfo
-                    {
-                        FileName = SCRCPY_PATH,
-                        Arguments = $"-s {currentDevice} {args}",
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    };
-
-                    var scrcpyProcess = Process.Start(psi);
-                    await Task.Delay(1000);
-                    Dispatcher.Invoke(() => DeviceStatusText.Text += " - Ready");
-
-                    while (!scrcpyProcess.HasExited)
-                        await Task.Delay(500);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"scrcpy launch failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            });
-        }
-
-        public async Task PerformTapSequenceAsync(string device) => await AdbHelper.RunAdbAsync($"-s {device} shell input text {config.SelectedDevicePincode}");
 
         private void CloseAllAdbProcesses()
         {
@@ -607,7 +598,8 @@ namespace phone_utils
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to close ADB processes: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if(config.SpecialOptions != null && config.SpecialOptions.ShowDebugMessages)
+                    MessageBox.Show($"Failed to close ADB processes: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
         #endregion

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -15,7 +16,7 @@ namespace phone_utils
     {
         private readonly MainWindow _main;
         private readonly string _device;
-        private readonly string _scrcpyPath;
+        private readonly string _SCRCPY_PATH;
         private readonly string _ADB_PATH;
         private readonly AppConfig _appConfig;
         private GlobalHotkeyManager _hotkeyManager;
@@ -27,7 +28,7 @@ namespace phone_utils
             InitializeComponent();
             _main = main;
             _device = device;
-            _scrcpyPath = scrcpyPath;
+            _SCRCPY_PATH = scrcpyPath;
             _ADB_PATH = adb;
             _appConfig = config;
 
@@ -86,7 +87,7 @@ namespace phone_utils
         private async void OnInsertPressed()
         {
             if (!_hotkeysEnabled || string.IsNullOrEmpty(_device) || _device.Contains(":")) return;
-            await _main.PerformTapSequenceAsync(_device);
+            await AdbHelper.RunAdbAsync($"-s {_device} shell input text {_appConfig.SelectedDevicePincode}");
         }
 
         private async Task LaunchApp(string packageName)
@@ -120,14 +121,19 @@ namespace phone_utils
                 case "ChkNoAudio":
                     ChkPlaybackAudio.IsChecked = false;
                     ChkAudioOnly.IsChecked = false;
+                    Chkaudiobuffer.IsChecked = false;
+                    Chkaudiobuffer.IsEnabled = false;
                     break;
                 case "ChkPlaybackAudio":
                     ChkNoAudio.IsChecked = false;
                     ChkAudioOnly.IsChecked = false;
+                    Chkaudiobuffer.IsEnabled = true;
                     break;
                 case "ChkAudioOnly":
                     ChkNoAudio.IsChecked = false;
                     ChkPlaybackAudio.IsChecked = false;
+                    Chkaudiobuffer.IsChecked = false;
+                    Chkaudiobuffer.IsEnabled = false;
                     break;
             }
 
@@ -220,7 +226,7 @@ namespace phone_utils
         {
             SaveCurrentSettings();
             string finalArgs = string.Join(" ", args);
-            await _main.RunScrcpyAsync(finalArgs);
+            await RunScrcpyAsync(finalArgs);
         }
 
         private async void BtnDisplay_click(object sender, RoutedEventArgs e)
@@ -269,7 +275,7 @@ namespace phone_utils
                 MessageBox.Show("Invalid Audio Buffer value.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
             if (Chkvideobuffer.IsChecked == true && int.TryParse(TxtVideoBuffer.Text, out int videoBuffer) && videoBuffer > 0)
                 args.Add($"--video-buffer={videoBuffer}");
-            else if (Chkaudiobuffer.IsChecked == true)
+            else if (Chkvideobuffer.IsChecked == true)
                 MessageBox.Show("Invalid Audio Buffer value.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
             if (ChkStayAwake.IsChecked == true && !camera) args.Add("--stay-awake");
             if (ChkTurnScreenOff.IsChecked == true && !camera) args.Add("--turn-screen-off");
@@ -302,7 +308,44 @@ namespace phone_utils
             return args;
         }
 
+        public Task RunScrcpyAsync(string args)
+        {
+            _main.DeviceStatusText.Text = args.Contains("--no-audio")
+                ? "Device Status: Casting without audio"
+                : "Device Status: Casting with audio";
 
+            return Task.Run(async () =>
+            {
+                if (!File.Exists(_SCRCPY_PATH))
+                {
+                    MessageBox.Show("scrcpy.exe not found!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                try
+                {
+
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = _SCRCPY_PATH,
+                        Arguments = $"-s {_device} {args}",
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+
+                    var scrcpyProcess = Process.Start(psi);
+                    await Task.Delay(1000);
+                    Dispatcher.Invoke(() => _main.DeviceStatusText.Text += " - Ready");
+
+                    while (!scrcpyProcess.HasExited)
+                        await Task.Delay(500);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"scrcpy launch failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            });
+        }
         #endregion
 
         #region Installed Apps
