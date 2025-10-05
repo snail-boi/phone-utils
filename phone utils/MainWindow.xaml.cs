@@ -10,15 +10,19 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using DiscordRPC;
+using WpfMedia = System.Windows.Media;  // Alias for WPF media
+using Windows.Media;
+using Windows.Media.Playback;
+using CoverArt = TagLib;
 using static phone_utils.SetupControl;
+using Windows.Storage.Streams;
+using Windows.Storage;
 
 namespace phone_utils
 {
     public partial class MainWindow : Window
     {
         #region Fields
-        private DiscordRpcClient discordClient;
         public static string ADB_PATH;
         private string SCRCPY_PATH;
         private AppConfig config; // class-level
@@ -29,13 +33,17 @@ namespace phone_utils
         private bool wasCharging = false;
         public bool devmode;
         public static bool debugmode;
+
+        private Windows.Media.Playback.MediaPlayer mediaPlayer;
+        private Windows.Media.SystemMediaTransportControls smtcControls;
+        private Windows.Media.SystemMediaTransportControlsDisplayUpdater smtcDisplayUpdater;
         #endregion
 
         #region Constructor
         public MainWindow()
         {
             InitializeComponent();
-            InitializeDiscord();
+            InitializeMediaPlayer();
 
             LoadConfiguration();
             DetectDeviceAsync();
@@ -412,7 +420,7 @@ namespace phone_utils
                 if (string.IsNullOrWhiteSpace(output))
                 {
                     DeviceStatusText.Text = "No song currently playing in Musicolet.";
-                    discordClient?.ClearPresence();
+                    ClearMediaControls(); // Changed from discordClient?.ClearPresence()
                     return;
                 }
 
@@ -423,7 +431,10 @@ namespace phone_utils
                     if (!block.Contains("package=in.krosbits.musicolet") || !block.Contains("active=true"))
                         continue;
 
-                    var match = Regex.Match(block, @"metadata:\s+size=\d+,\s+description=([^,]+),\s+([^,]+),\s+([^,]+)", RegexOptions.Singleline);
+                    var match = Regex.Match(block,
+                        @"metadata:\s+size=\d+,\s+description=(.+),\s+(.+),\s+(.+)$",
+                        RegexOptions.Singleline);
+
                     if (!match.Success)
                         continue;
 
@@ -437,52 +448,161 @@ namespace phone_utils
 
                         try
                         {
-                            discordClient?.SetPresence(new RichPresence
-                            {
-                                Details = $"Title: {title}",
-                                State = $"Artist: {artist}",
-                                Assets = new Assets
-                                {
-                                    LargeImageKey = "mainlogo",
-                                    LargeImageText = "Phone RPC shows what's playing on your phone"
-                                }
-                            });
+                            UpdateMediaControls(title, artist, album); // Changed from Discord RPC
                         }
                         catch (Exception ex)
                         {
-                            // Log Discord errors separately to avoid breaking song updates
-                            Console.WriteLine($"Discord update failed: {ex.Message}");
+                            Console.WriteLine($"Media controls update failed: {ex.Message}");
                         }
                     }
                     else
                     {
                         DeviceStatusText.Text = "No song currently playing in Musicolet.";
-                        discordClient?.ClearPresence();
+                        ClearMediaControls(); // Changed from discordClient?.ClearPresence()
                     }
 
-                    return; // stop after first active song
+                    return;
                 }
 
-                // No active song found
                 DeviceStatusText.Text = "No song currently playing in Musicolet.";
-                discordClient?.ClearPresence();
+                ClearMediaControls(); // Changed from discordClient?.ClearPresence()
             }
             catch (Exception ex)
             {
-                // Show exact exception for debugging
                 DeviceStatusText.Text = $"Error retrieving song info: {ex.Message}";
-                discordClient?.ClearPresence();
+                ClearMediaControls(); // Changed from discordClient?.ClearPresence()
             }
         }
 
         #endregion
 
-        #region Discord
-        private void InitializeDiscord()
+        #region Media Controls
+        private async void InitializeMediaPlayer()
         {
-            discordClient = new DiscordRpcClient("1400937689871814656");
-            discordClient.Initialize();
+            try
+            {
+                mediaPlayer = new Windows.Media.Playback.MediaPlayer();
+
+                smtcControls = mediaPlayer.SystemMediaTransportControls;
+                smtcDisplayUpdater = smtcControls.DisplayUpdater;
+
+                smtcControls.IsEnabled = true;
+                smtcControls.IsPlayEnabled = true;
+                smtcControls.IsPauseEnabled = true;
+                smtcControls.IsStopEnabled = true;
+
+                smtcDisplayUpdater.Type = MediaPlaybackType.Music;
+
+
+            }
+            catch (Exception ex)
+            {
+                if (debugmode) Console.WriteLine($"MediaPlayer initialization failed: {ex.Message}");
+            }
         }
+
+
+        #region Media Controls Helper Methods
+
+        private async Task SetSMTCImageAsync(string fileNameWithoutExtension)
+        {
+            string folderPath = @"C:\Users\wille\Desktop\Audio";
+            string[] audioExtensions = { ".mp3", ".flac", ".wav", ".m4a", ".ogg", ".opus" };
+
+            string filePath = null;
+
+            // Search for the file with the given name + any audio extension
+            foreach (var ext in audioExtensions)
+            {
+                string path = Path.Combine(folderPath, fileNameWithoutExtension + ext);
+                if (File.Exists(path))
+                {
+                    filePath = path;
+                    break;
+                }
+            }
+
+            if (filePath == null)
+            {
+                filePath = "";
+                if (debugmode) Console.WriteLine("Audio file not found!");
+                return;
+            }
+
+            try
+            {
+                // Load audio file using TagLib
+                var tagFile = CoverArt.File.Create(filePath);
+
+                if (tagFile.Tag.Pictures.Length > 0)
+                {
+                    // Get the first embedded image
+                    var pictureData = tagFile.Tag.Pictures[0].Data.Data;
+
+                    // Save to temporary file
+                    string tempPath = Path.Combine(Path.GetTempPath(), "smtc_cover.jpg");
+                    await File.WriteAllBytesAsync(tempPath, pictureData);
+
+                    // Load as StorageFile for SMTC
+                    StorageFile file = await StorageFile.GetFileFromPathAsync(tempPath);
+                    RandomAccessStreamReference streamRef = RandomAccessStreamReference.CreateFromFile(file);
+
+                    smtcDisplayUpdater.Thumbnail = streamRef;
+                    smtcDisplayUpdater.Update();
+
+                    if (debugmode) Console.WriteLine("Cover image set successfully!");
+                }
+                else
+                {
+                    if (debugmode) Console.WriteLine("No cover art found in this audio file.");
+                }
+            }
+            catch (Exception ex)
+            {
+                if (debugmode) Console.WriteLine($"Failed to set static SMTC image: {ex.Message}");
+            }
+        }
+
+
+        private void UpdateMediaControls(string title, string artist, string album)
+        {
+            SetSMTCImageAsync(title);
+            if (mediaPlayer == null || smtcDisplayUpdater == null)
+                return;
+
+            try
+            {
+                var musicProperties = smtcDisplayUpdater.MusicProperties;
+                musicProperties.Title = title;
+                musicProperties.Artist = artist;
+                musicProperties.AlbumTitle = album;
+
+                smtcDisplayUpdater.Update();
+                smtcControls.PlaybackStatus = MediaPlaybackStatus.Playing;
+
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+
+        private void ClearMediaControls()
+        {
+            if (mediaPlayer == null || smtcDisplayUpdater == null)
+                return;
+
+            try
+            {
+                smtcDisplayUpdater.ClearAll();
+                smtcControls.PlaybackStatus = MediaPlaybackStatus.Stopped;
+            }
+            catch (Exception ex)
+            {
+                if (debugmode)
+                    Console.WriteLine($"Failed to clear media controls: {ex.Message}");
+            }
+        }
+        #endregion
         #endregion
 
         #region Button Handlers
@@ -612,7 +732,17 @@ namespace phone_utils
             try
             {
                 CloseAllAdbProcesses();
-                discordClient.Dispose();
+
+                // Changed from discordClient.Dispose():
+                if (smtcDisplayUpdater != null)
+                {
+                    smtcDisplayUpdater.ClearAll();
+                }
+
+                if (mediaPlayer != null)
+                {
+                    mediaPlayer.Dispose();
+                }
             }
             catch { }
         }

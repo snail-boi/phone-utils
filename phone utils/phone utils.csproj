@@ -2,11 +2,14 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <RootNamespace>phone_utils</RootNamespace>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <UseWPF>true</UseWPF>
+	  <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+	  <!-- ↑ This MUST change from net8.0-windows -->
+	  <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+	  <RootNamespace>phone_utils</RootNamespace>
+	  <Nullable>enable</Nullable>
+	  <ImplicitUsings>enable</ImplicitUsings>
+
+	  <UseWPF>true</UseWPF>
     <ApplicationIcon>logo.ico</ApplicationIcon>
   </PropertyGroup>
 
@@ -88,7 +91,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DiscordRichPresence" Version="1.5.0.51" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="taglib-sharp-netstandard2.0" Version="2.1.0" />
   </ItemGroup>
 
 </Project>
