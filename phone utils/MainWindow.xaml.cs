@@ -508,10 +508,8 @@ namespace phone_utils
         {
             string folderPath = @"C:\Users\wille\Desktop\Audio";
             string[] audioExtensions = { ".mp3", ".flac", ".wav", ".m4a", ".ogg", ".opus" };
-
             string filePath = null;
 
-            // Search for the file with the given name + any audio extension
             foreach (var ext in audioExtensions)
             {
                 string path = Path.Combine(folderPath, fileNameWithoutExtension + ext);
@@ -522,46 +520,60 @@ namespace phone_utils
                 }
             }
 
-            if (filePath == null)
-            {
-                filePath = "";
-                if (debugmode) Console.WriteLine("Audio file not found!");
-                return;
-            }
+            string defaultImagePath = @"C:\Users\wille\Downloads\f0bc7b8a-f05b-4c95-9786-aef0bac49a7f(2).png";
 
             try
             {
+                // ✅ If no file found, use default image
+                if (string.IsNullOrEmpty(filePath))
+                {
+                    if (debugmode) Console.WriteLine("No audio file found. Using default image.");
+                    StorageFile defaultImageFile = await StorageFile.GetFileFromPathAsync(defaultImagePath);
+                    smtcDisplayUpdater.Thumbnail = RandomAccessStreamReference.CreateFromFile(defaultImageFile);
+                    smtcDisplayUpdater.Update();
+                    return;
+                }
+
                 // Load audio file using TagLib
                 var tagFile = CoverArt.File.Create(filePath);
 
-                if (tagFile.Tag.Pictures.Length > 0)
+                if (tagFile.Tag.Pictures != null && tagFile.Tag.Pictures.Length > 0)
                 {
-                    // Get the first embedded image
                     var pictureData = tagFile.Tag.Pictures[0].Data.Data;
-
-                    // Save to temporary file
                     string tempPath = Path.Combine(Path.GetTempPath(), "smtc_cover.jpg");
                     await File.WriteAllBytesAsync(tempPath, pictureData);
 
-                    // Load as StorageFile for SMTC
                     StorageFile file = await StorageFile.GetFileFromPathAsync(tempPath);
-                    RandomAccessStreamReference streamRef = RandomAccessStreamReference.CreateFromFile(file);
-
-                    smtcDisplayUpdater.Thumbnail = streamRef;
-                    smtcDisplayUpdater.Update();
-
-                    if (debugmode) Console.WriteLine("Cover image set successfully!");
+                    smtcDisplayUpdater.Thumbnail = RandomAccessStreamReference.CreateFromFile(file);
                 }
                 else
                 {
-                    if (debugmode) Console.WriteLine("No cover art found in this audio file.");
+                    if (debugmode) Console.WriteLine("No cover art found. Using default image.");
+                    StorageFile defaultImageFile = await StorageFile.GetFileFromPathAsync(defaultImagePath);
+                    smtcDisplayUpdater.Thumbnail = RandomAccessStreamReference.CreateFromFile(defaultImageFile);
                 }
+
+                smtcDisplayUpdater.Update();
             }
             catch (Exception ex)
             {
-                if (debugmode) Console.WriteLine($"Failed to set static SMTC image: {ex.Message}");
+                if (debugmode) Console.WriteLine($"Failed to set SMTC image: {ex.Message}");
+                // Fallback to default in case of any failure
+                try
+                {
+                    StorageFile defaultImageFile = await StorageFile.GetFileFromPathAsync(defaultImagePath);
+                    smtcDisplayUpdater.Thumbnail = RandomAccessStreamReference.CreateFromFile(defaultImageFile);
+                    smtcDisplayUpdater.Update();
+                }
+                catch (Exception innerEx)
+                {
+                    if (debugmode) Console.WriteLine($"Also failed to set default image: {innerEx.Message}");
+                }
             }
         }
+
+
+
 
 
         private void UpdateMediaControls(string title, string artist, string album)
