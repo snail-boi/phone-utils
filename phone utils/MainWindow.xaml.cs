@@ -460,15 +460,29 @@ namespace phone_utils
 
             bool isAwake = match.Success && match.Groups[1].Value.Equals("Awake", StringComparison.OrdinalIgnoreCase);
 
-
             if (isAwake)
             {
-                var input = await AdbHelper.RunAdbCaptureAsync("-s {currentDevice} shell \"dumpsys window | sed -n '/mCurrentFocus/p'\"");
-                var match2 = Regex.Match(input, @"\su0\s([^\s/]+)");
-                if (match2.Success)
+                // Capture full dumpsys window output
+                var input = await AdbHelper.RunAdbCaptureAsync($"-s {currentDevice} shell dumpsys window");
+
+                // Find the line containing "mCurrentFocus"
+                var currentFocusLine = input
+                    .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                    .FirstOrDefault(line => line.Contains("mCurrentFocus"));
+
+                if (currentFocusLine != null)
                 {
-                    string packageName = match2.Groups[1].Value;
-                    DeviceStatusText.Text = $"Current App: {packageName}";
+                    // Apply your regex exactly as before
+                    var match2 = Regex.Match(currentFocusLine, @"\su0\s([^\s/]+)");
+                    if (match2.Success)
+                    {
+                        string packageName = match2.Groups[1].Value;
+                        DeviceStatusText.Text = $"Current App: {packageName}";
+                    }
+                    else
+                    {
+                        DeviceStatusText.Text = $"Current app not found";
+                    }
                 }
                 else
                 {
@@ -480,6 +494,7 @@ namespace phone_utils
                 DeviceStatusText.Text = $"Currently asleep";
             }
         }
+
 
 
         #endregion
@@ -553,14 +568,16 @@ namespace phone_utils
         }
         private async void PlayNextTrack()
         {
-            await UpdateCurrentSongAsync();
             await AdbHelper.RunAdbAsync($"-s {currentDevice} shell input keyevent 87");
+            Thread.Sleep(500);
+            await UpdateCurrentSongAsync();
             if (debugmode) Console.WriteLine("Next track requested.");
         }
         private async void PlayPreviousTrack()
         {
-            await UpdateCurrentSongAsync();
             await AdbHelper.RunAdbAsync($"-s {currentDevice} shell input keyevent 88");
+            Thread.Sleep(500);
+            await UpdateCurrentSongAsync();
             if (debugmode) Console.WriteLine("Previous track requested.");
         }
 
