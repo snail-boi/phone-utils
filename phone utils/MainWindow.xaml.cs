@@ -196,8 +196,6 @@ namespace phone_utils
             EnableButtons(true);
             await UpdateBatteryStatusAsync();
             await UpdateForegroundAppAsync();
-            if(devmode == false)
-                SetSubDeviceTextAsync();
 
             if (ContentHost.Content == null) ShowNotificationsAsDefault();
             return true;
@@ -230,38 +228,11 @@ namespace phone_utils
             EnableButtons(true);
             await UpdateBatteryStatusAsync();
             await UpdateForegroundAppAsync();
-            SetSubDeviceTextAsync();
             if (ContentHost.Content == null) ShowNotificationsAsDefault();
             return true;
         }
 
-        private async void SetSubDeviceTextAsync()
-        {
-            var sleepState = await AdbHelper.RunAdbCaptureAsync($"-s {currentDevice} shell dumpsys power");
-            var match = Regex.Match(sleepState, @"mWakefulness\s*=\s*(\w+)", RegexOptions.IgnoreCase);
 
-            bool isAwake = match.Success && match.Groups[1].Value.Equals("Awake", StringComparison.OrdinalIgnoreCase);
-
-
-            if (isAwake)
-            {
-                var input = await AdbHelper.RunAdbCaptureAsync("shell \"dumpsys window | sed -n '/mCurrentFocus/p'\"");
-                var match2 = Regex.Match(input, @"\su0\s([^\s/]+)");
-                if (match2.Success)
-                {
-                    string packageName = match2.Groups[1].Value;
-                    DeviceStatusText.Text = $"Current App: {packageName}";
-                }
-                else
-                {
-                    DeviceStatusText.Text = $"Current app not found";
-                }
-            }
-            else
-            {
-                DeviceStatusText.Text = $"Currently asleep";
-            }
-        }
 
         private void SetStatus(string message, Color color)
         {
@@ -398,81 +369,118 @@ namespace phone_utils
 
 
 
-
         private async Task UpdateForegroundAppAsync()
         {
             try
             {
-                if (config.SpecialOptions == null || !config.SpecialOptions.DevMode)
-                {
-                    DeviceStatusText.Text = "Device connected.";
-                    return;
-                }
-
                 if (string.IsNullOrEmpty(currentDevice))
                 {
                     DeviceStatusText.Text = "No device selected.";
+                    ClearMediaControls();
                     return;
                 }
 
-                string output = await AdbHelper.RunAdbCaptureAsync($"-s {currentDevice} shell dumpsys media_session");
-
-                if (string.IsNullOrWhiteSpace(output))
+                if (config.SpecialOptions != null && config.SpecialOptions.DevMode)
                 {
-                    DeviceStatusText.Text = "No song currently playing in Musicolet.";
-                    ClearMediaControls(); // Changed from discordClient?.ClearPresence()
-                    return;
+                    // DevMode: detect currently playing song in Musicolet
+                    await UpdateCurrentSongAsync();
                 }
-
-                var sessionBlocks = output.Split(new[] { "queueTitle=" }, StringSplitOptions.RemoveEmptyEntries);
-
-                foreach (var block in sessionBlocks)
+                else
                 {
-                    if (!block.Contains("package=in.krosbits.musicolet") || !block.Contains("active=true"))
-                        continue;
-
-                    var match = Regex.Match(block,
-                        @"metadata:\s+size=\d+,\s+description=(.+),\s+(.+),\s+(.+)$",
-                        RegexOptions.Singleline);
-
-                    if (!match.Success)
-                        continue;
-
-                    string title = match.Groups[1].Value.Trim();
-                    string artist = match.Groups[2].Value.Trim();
-                    string album = match.Groups[3].Value.Trim();
-
-                    if (!string.IsNullOrEmpty(title) && !string.IsNullOrEmpty(artist))
-                    {
-                        DeviceStatusText.Text = $"Song: {title} by {artist}";
-
-                        try
-                        {
-                            UpdateMediaControls(title, artist, album); // Changed from Discord RPC
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Media controls update failed: {ex.Message}");
-                        }
-                    }
-                    else
-                    {
-                        DeviceStatusText.Text = "No song currently playing in Musicolet.";
-                        ClearMediaControls(); // Changed from discordClient?.ClearPresence()
-                    }
-
-                    return;
+                    // Normal mode: detect active foreground app
+                    DisplayAppActivity();
                 }
-
-                DeviceStatusText.Text = "No song currently playing in Musicolet.";
-                ClearMediaControls(); // Changed from discordClient?.ClearPresence()
             }
             catch (Exception ex)
             {
-                DeviceStatusText.Text = $"Error retrieving song info: {ex.Message}";
-                ClearMediaControls(); // Changed from discordClient?.ClearPresence()
+                DeviceStatusText.Text = $"Error retrieving info: {ex.Message}";
+                ClearMediaControls();
             }
         }
+
+        private async Task UpdateCurrentSongAsync()
+        {
+            string output = await AdbHelper.RunAdbCaptureAsync($"-s {currentDevice} shell dumpsys media_session");
+
+            if (string.IsNullOrWhiteSpace(output))
+            {
+                DeviceStatusText.Text = "No song currently playing in Musicolet.";
+                ClearMediaControls();
+                return;
+            }
+
+            var sessionBlocks = output.Split(new[] { "queueTitle=" }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var block in sessionBlocks)
+            {
+                if (!block.Contains("package=in.krosbits.musicolet") || !block.Contains("active=true"))
+                    continue;
+
+                var match = Regex.Match(block,
+                    @"metadata:\s+size=\d+,\s+description=(.+),\s+(.+),\s+(.+)$",
+                    RegexOptions.Singleline);
+
+                if (!match.Success)
+                    continue;
+
+                string title = match.Groups[1].Value.Trim();
+                string artist = match.Groups[2].Value.Trim();
+                string album = match.Groups[3].Value.Trim();
+
+                if (!string.IsNullOrEmpty(title) && !string.IsNullOrEmpty(artist))
+                {
+                    DeviceStatusText.Text = $"Song: {title} by {artist}";
+                    try
+                    {
+                        UpdateMediaControls(title, artist, album);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Media controls update failed: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    DeviceStatusText.Text = "No song currently playing in Musicolet.";
+                    ClearMediaControls();
+                }
+
+                return; // Found active Musicolet session, exit loop
+            }
+
+            // No active Musicolet session found
+            DeviceStatusText.Text = "No song currently playing in Musicolet.";
+            ClearMediaControls();
+        }
+
+        private async void DisplayAppActivity()
+        {
+            var sleepState = await AdbHelper.RunAdbCaptureAsync($"-s {currentDevice} shell dumpsys power");
+            var match = Regex.Match(sleepState, @"mWakefulness\s*=\s*(\w+)", RegexOptions.IgnoreCase);
+
+            bool isAwake = match.Success && match.Groups[1].Value.Equals("Awake", StringComparison.OrdinalIgnoreCase);
+
+
+            if (isAwake)
+            {
+                var input = await AdbHelper.RunAdbCaptureAsync("-s {currentDevice} shell \"dumpsys window | sed -n '/mCurrentFocus/p'\"");
+                var match2 = Regex.Match(input, @"\su0\s([^\s/]+)");
+                if (match2.Success)
+                {
+                    string packageName = match2.Groups[1].Value;
+                    DeviceStatusText.Text = $"Current App: {packageName}";
+                }
+                else
+                {
+                    DeviceStatusText.Text = $"Current app not found";
+                }
+            }
+            else
+            {
+                DeviceStatusText.Text = $"Currently asleep";
+            }
+        }
+
 
         #endregion
 
@@ -489,7 +497,10 @@ namespace phone_utils
                 smtcControls.IsEnabled = true;
                 smtcControls.IsPlayEnabled = true;
                 smtcControls.IsPauseEnabled = true;
-                smtcControls.IsStopEnabled = true;
+                smtcControls.IsNextEnabled = true;
+                smtcControls.IsPreviousEnabled = true;
+
+                smtcControls.ButtonPressed += smtcControls_ButtonPressed;
 
                 smtcDisplayUpdater.Type = MediaPlaybackType.Music;
 
@@ -501,6 +512,60 @@ namespace phone_utils
             }
         }
 
+        private async void smtcControls_ButtonPressed(SystemMediaTransportControls sender, SystemMediaTransportControlsButtonPressedEventArgs args)
+        {
+            // SMTC events come in on a background thread
+            await Dispatcher.InvokeAsync(() =>
+            {
+                switch (args.Button)
+                {
+                    case SystemMediaTransportControlsButton.Play:
+                        PlayTrack();
+                        break;
+
+                    case SystemMediaTransportControlsButton.Pause:
+                        PauzeTrack();
+                        break;
+
+                    case SystemMediaTransportControlsButton.Next:
+                        PlayNextTrack();
+                        break;
+
+                    case SystemMediaTransportControlsButton.Previous:
+                        PlayPreviousTrack();
+                        break;
+                }
+            });
+        }
+
+        #region Media Control Actions
+        private async void PlayTrack()
+        {
+            await AdbHelper.RunAdbAsync($"-s {currentDevice} shell input keyevent 85");
+            smtcControls.PlaybackStatus = MediaPlaybackStatus.Playing;
+            if (debugmode) Console.WriteLine("Play requested");
+        }
+        private async void PauzeTrack()
+        {
+            await AdbHelper.RunAdbAsync($"-s {currentDevice} shell input keyevent 85");
+            smtcControls.PlaybackStatus = MediaPlaybackStatus.Paused;
+            if (debugmode) Console.WriteLine("Pause requested.");
+        }
+        private async void PlayNextTrack()
+        {
+            await UpdateCurrentSongAsync();
+            await AdbHelper.RunAdbAsync($"-s {currentDevice} shell input keyevent 87");
+            if (debugmode) Console.WriteLine("Next track requested.");
+        }
+        private async void PlayPreviousTrack()
+        {
+            await UpdateCurrentSongAsync();
+            await AdbHelper.RunAdbAsync($"-s {currentDevice} shell input keyevent 88");
+            if (debugmode) Console.WriteLine("Previous track requested.");
+        }
+
+
+        #endregion
 
         #region Media Controls Helper Methods
 
@@ -520,7 +585,7 @@ namespace phone_utils
                 }
             }
 
-            string defaultImagePath = @"C:\Users\wille\Downloads\f0bc7b8a-f05b-4c95-9786-aef0bac49a7f(2).png";
+            string defaultImagePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),"Phone Utils","Resources","logo.png");
 
             try
             {

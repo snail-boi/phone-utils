@@ -30,6 +30,7 @@
     <None Remove="Resources\avutil-59.dll" />
     <None Remove="Resources\icon.png" />
     <None Remove="Resources\libusb-1.0.dll" />
+    <None Remove="Resources\logo.png" />
     <None Remove="Resources\open_a_terminal_here.bat" />
     <None Remove="Resources\scrcpy-console.bat" />
     <None Remove="Resources\scrcpy-noconsole.vbs" />
@@ -65,6 +66,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Resources\libusb-1.0.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\logo.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Resources\open_a_terminal_here.bat">
