@@ -402,56 +402,45 @@ namespace phone_utils
         {
             string output = await AdbHelper.RunAdbCaptureAsync($"-s {currentDevice} shell dumpsys media_session");
 
-            if (string.IsNullOrWhiteSpace(output))
+            bool foundActiveSong = false;
+
+            if (!string.IsNullOrWhiteSpace(output))
+            {
+                var sessionBlocks = output.Split(new[] { "queueTitle=" }, StringSplitOptions.RemoveEmptyEntries);
+
+                foreach (var block in sessionBlocks)
+                {
+                    if (!block.Contains("package=in.krosbits.musicolet") || !block.Contains("active=true"))
+                        continue;
+
+                    var match = Regex.Match(block,
+                        @"metadata:\s+size=\d+,\s+description=(.+),\s+(.+),\s+(.+)$",
+                        RegexOptions.Singleline);
+
+                    if (!match.Success)
+                        continue;
+
+                    string title = match.Groups[1].Value.Trim();
+                    string artist = match.Groups[2].Value.Trim();
+                    string album = match.Groups[3].Value.Trim();
+
+                    if (!string.IsNullOrEmpty(title) && !string.IsNullOrEmpty(artist))
+                    {
+                        DeviceStatusText.Text = $"Song: {title} by {artist}";
+                        UpdateMediaControls(title, artist, album);
+                        foundActiveSong = true;
+                        break; // exit after first active song
+                    }
+                }
+            }
+
+            if (!foundActiveSong)
             {
                 DeviceStatusText.Text = "No song currently playing in Musicolet.";
-                ClearMediaControls();
-                return;
+                ClearMediaControls(); // ensures SMTC is cleared
             }
-
-            var sessionBlocks = output.Split(new[] { "queueTitle=" }, StringSplitOptions.RemoveEmptyEntries);
-
-            foreach (var block in sessionBlocks)
-            {
-                if (!block.Contains("package=in.krosbits.musicolet") || !block.Contains("active=true"))
-                    continue;
-
-                var match = Regex.Match(block,
-                    @"metadata:\s+size=\d+,\s+description=(.+),\s+(.+),\s+(.+)$",
-                    RegexOptions.Singleline);
-
-                if (!match.Success)
-                    continue;
-
-                string title = match.Groups[1].Value.Trim();
-                string artist = match.Groups[2].Value.Trim();
-                string album = match.Groups[3].Value.Trim();
-
-                if (!string.IsNullOrEmpty(title) && !string.IsNullOrEmpty(artist))
-                {
-                    DeviceStatusText.Text = $"Song: {title} by {artist}";
-                    try
-                    {
-                        UpdateMediaControls(title, artist, album);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Media controls update failed: {ex.Message}");
-                    }
-                }
-                else
-                {
-                    DeviceStatusText.Text = "No song currently playing in Musicolet.";
-                    ClearMediaControls();
-                }
-
-                return; // Found active Musicolet session, exit loop
-            }
-
-            // No active Musicolet session found
-            DeviceStatusText.Text = "No song currently playing in Musicolet.";
-            ClearMediaControls();
         }
+
 
         private async void DisplayAppActivity()
         {
@@ -588,6 +577,14 @@ namespace phone_utils
 
         private async Task SetSMTCImageAsync(string fileNameWithoutExtension)
         {
+            // Ensure media player is initialized
+            if (mediaPlayer == null || smtcDisplayUpdater == null)
+            {
+                InitializeMediaPlayer();
+                if (mediaPlayer == null || smtcDisplayUpdater == null)
+                    return; // failed to initialize
+            }
+
             string folderPath = @"C:\Users\wille\Desktop\Audio";
             string[] audioExtensions = { ".mp3", ".flac", ".wav", ".m4a", ".ogg", ".opus" };
             string filePath = null;
@@ -602,57 +599,47 @@ namespace phone_utils
                 }
             }
 
-            string defaultImagePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),"Phone Utils","Resources","logo.png");
+            string defaultImagePath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "Phone Utils", "Resources", "logo.png"
+            );
 
             try
             {
-                // ✅ If no file found, use default image
+                StorageFile imageFile;
+
                 if (string.IsNullOrEmpty(filePath))
                 {
                     if (debugmode) Console.WriteLine("No audio file found. Using default image.");
-                    StorageFile defaultImageFile = await StorageFile.GetFileFromPathAsync(defaultImagePath);
-                    smtcDisplayUpdater.Thumbnail = RandomAccessStreamReference.CreateFromFile(defaultImageFile);
-                    smtcDisplayUpdater.Update();
-                    return;
-                }
-
-                // Load audio file using TagLib
-                var tagFile = CoverArt.File.Create(filePath);
-
-                if (tagFile.Tag.Pictures != null && tagFile.Tag.Pictures.Length > 0)
-                {
-                    var pictureData = tagFile.Tag.Pictures[0].Data.Data;
-                    string tempPath = Path.Combine(Path.GetTempPath(), "smtc_cover.jpg");
-                    await File.WriteAllBytesAsync(tempPath, pictureData);
-
-                    StorageFile file = await StorageFile.GetFileFromPathAsync(tempPath);
-                    smtcDisplayUpdater.Thumbnail = RandomAccessStreamReference.CreateFromFile(file);
+                    imageFile = await StorageFile.GetFileFromPathAsync(defaultImagePath);
                 }
                 else
                 {
-                    if (debugmode) Console.WriteLine("No cover art found. Using default image.");
-                    StorageFile defaultImageFile = await StorageFile.GetFileFromPathAsync(defaultImagePath);
-                    smtcDisplayUpdater.Thumbnail = RandomAccessStreamReference.CreateFromFile(defaultImageFile);
+                    var tagFile = CoverArt.File.Create(filePath);
+
+                    if (tagFile.Tag.Pictures != null && tagFile.Tag.Pictures.Length > 0)
+                    {
+                        var pictureData = tagFile.Tag.Pictures[0].Data.Data;
+                        string tempPath = Path.Combine(Path.GetTempPath(), "smtc_cover.jpg");
+                        await File.WriteAllBytesAsync(tempPath, pictureData);
+                        imageFile = await StorageFile.GetFileFromPathAsync(tempPath);
+                    }
+                    else
+                    {
+                        if (debugmode) Console.WriteLine("No cover art found. Using default image.");
+                        imageFile = await StorageFile.GetFileFromPathAsync(defaultImagePath);
+                    }
                 }
 
+                smtcDisplayUpdater.Thumbnail = RandomAccessStreamReference.CreateFromFile(imageFile);
                 smtcDisplayUpdater.Update();
             }
             catch (Exception ex)
             {
                 if (debugmode) Console.WriteLine($"Failed to set SMTC image: {ex.Message}");
-                // Fallback to default in case of any failure
-                try
-                {
-                    StorageFile defaultImageFile = await StorageFile.GetFileFromPathAsync(defaultImagePath);
-                    smtcDisplayUpdater.Thumbnail = RandomAccessStreamReference.CreateFromFile(defaultImageFile);
-                    smtcDisplayUpdater.Update();
-                }
-                catch (Exception innerEx)
-                {
-                    if (debugmode) Console.WriteLine($"Also failed to set default image: {innerEx.Message}");
-                }
             }
         }
+
 
 
 
@@ -682,13 +669,23 @@ namespace phone_utils
 
         private void ClearMediaControls()
         {
-            if (mediaPlayer == null || smtcDisplayUpdater == null)
-                return;
-
             try
             {
-                smtcDisplayUpdater.ClearAll();
-                smtcControls.PlaybackStatus = MediaPlaybackStatus.Stopped;
+                if (smtcDisplayUpdater != null)
+                {
+                    smtcDisplayUpdater.ClearAll();
+                    smtcDisplayUpdater.Update();
+                }
+
+                if (mediaPlayer != null)
+                {
+                    mediaPlayer.Pause();
+                    mediaPlayer.Dispose();
+                    mediaPlayer = null;
+                }
+
+                smtcControls = null;
+                smtcDisplayUpdater = null;
             }
             catch (Exception ex)
             {
@@ -696,6 +693,8 @@ namespace phone_utils
                     Console.WriteLine($"Failed to clear media controls: {ex.Message}");
             }
         }
+
+
         #endregion
         #endregion
 
