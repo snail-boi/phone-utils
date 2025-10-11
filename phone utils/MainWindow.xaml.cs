@@ -61,6 +61,8 @@ namespace phone_utils
         #region Configuration & Setup
         private void LoadConfiguration()
         {
+            Debugger.show("Loading configuration...");
+
             string exeDir = AppDomain.CurrentDomain.BaseDirectory;
             string configPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -69,17 +71,27 @@ namespace phone_utils
             );
 
             config = SetupControl.ConfigManager.Load(configPath);
+
+            Debugger.show($"Config loaded from {configPath}");
+
             ADB_PATH = string.IsNullOrEmpty(config.Paths.Adb)
                 ? Path.Combine(exeDir, "adb.exe")
                 : config.Paths.Adb;
+
+            Debugger.show($"ADB Path: {ADB_PATH}");
 
             SCRCPY_PATH = string.IsNullOrEmpty(config.Paths.Scrcpy)
                 ? Path.Combine(exeDir, "scrcpy.exe")
                 : config.Paths.Scrcpy;
 
+            Debugger.show($"Scrcpy Path: {SCRCPY_PATH}");
+
             wifiDevice = config.SelectedDeviceWiFi;
             devmode = config.SpecialOptions != null && config.SpecialOptions.DevMode;
             debugmode = config.SpecialOptions != null && config.SpecialOptions.ShowDebugMessages;
+
+            Debugger.show($"Selected Wi-Fi device: {wifiDevice}");
+            Debugger.show($"Dev mode: {devmode}, Debug mode: {debugmode}");
 
             // Load button colors from config
             try
@@ -90,10 +102,12 @@ namespace phone_utils
                     (SolidColorBrush)new BrushConverter().ConvertFromString(config.ButtonStyle.Foreground);
                 Application.Current.Resources["ButtonHover"] =
                     (SolidColorBrush)new BrushConverter().ConvertFromString(config.ButtonStyle.Hover);
+
+                Debugger.show("Button colors loaded successfully");
             }
             catch
             {
-                // fallback to defaults if invalid color strings
+                Debugger.show("Failed to load button colors, using defaults");
                 Application.Current.Resources["ButtonBackground"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#5539cc"));
                 Application.Current.Resources["ButtonForeground"] = new SolidColorBrush(Colors.White);
                 Application.Current.Resources["ButtonHover"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#553fff"));
@@ -154,29 +168,32 @@ namespace phone_utils
 
         private async Task DetectDeviceAsync()
         {
-            if(debugmode == true)
-            {
-                StatusText.Foreground = new SolidColorBrush(Colors.Red);
-                StatusText.Text = "Detecting selected device...";
-            }
+            Debugger.show("Starting device detection...");
 
             if (!File.Exists(ADB_PATH))
             {
                 SetStatus("Please add device under device settings.", Colors.Red);
+                Debugger.show("ADB executable not found");
                 return;
             }
-            if(config.SelectedDeviceWiFi != "None")
-                await AdbHelper.RunAdbAsync($"connect {wifiDevice}");
-            var devices = await AdbHelper.RunAdbCaptureAsync("devices");
-            var deviceList = devices.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
+            if (config.SelectedDeviceWiFi != "None")
+            {
+                Debugger.show($"Connecting to Wi-Fi device: {wifiDevice}");
+                await AdbHelper.RunAdbAsync($"connect {wifiDevice}");
+            }
+
+            var devices = await AdbHelper.RunAdbCaptureAsync("devices");
+            Debugger.show($"ADB devices output:\n{devices}");
+
+            var deviceList = devices.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
             if (await CheckUsbDeviceAsync(deviceList)) return;
             if (await CheckWifiDeviceAsync(deviceList) && config.SelectedDeviceWiFi != "None") return;
 
             SetStatus("No selected device found!", Colors.Red);
             EnableButtons(false);
-
+            Debugger.show("No device detected");
         }
 
         private async Task<bool> CheckUsbDeviceAsync(string[] deviceList)
@@ -189,15 +206,20 @@ namespace phone_utils
             SetStatus($"USB device connected: {config.SelectedDeviceName}", Colors.Green);
             currentDevice = config.SelectedDeviceUSB;
 
+            Debugger.show($"USB device {currentDevice} connected");
+
             if (config.SelectedDeviceWiFi != "None")
             {
+                Debugger.show("Setting up Wi-Fi over USB...");
                 await SetupWifiOverUsbAsync(deviceList);
             }
+
             EnableButtons(true);
             await UpdateBatteryStatusAsync();
             await UpdateForegroundAppAsync();
 
             if (ContentHost.Content == null) ShowNotificationsAsDefault();
+
             return true;
         }
 
@@ -206,10 +228,16 @@ namespace phone_utils
             if (string.IsNullOrEmpty(config.SelectedDeviceWiFi)) return;
 
             bool wifiAlreadyConnected = deviceList.Any(l => l.StartsWith(config.SelectedDeviceWiFi));
-            if (wifiAlreadyConnected) return;
+            if (wifiAlreadyConnected)
+            {
+                Debugger.show("Wi-Fi device already connected via USB setup");
+                return;
+            }
 
+            Debugger.show("Enabling TCP/IP mode on USB device");
             await AdbHelper.RunAdbAsync($"-s {config.SelectedDeviceUSB} tcpip 5555");
             var connectResult = await AdbHelper.RunAdbCaptureAsync($"connect {config.SelectedDeviceWiFi}");
+            Debugger.show($"Wi-Fi connection result: {connectResult}");
 
             StatusText.Text += connectResult.Contains("connected")
                 ? " | Wi-Fi port has been set up."
@@ -246,13 +274,17 @@ namespace phone_utils
             if (string.IsNullOrEmpty(currentDevice))
             {
                 SetBatteryStatus("N/A", Colors.Gray);
+                Debugger.show("No current device to check battery");
                 return;
             }
 
             try
             {
+                Debugger.show("Fetching battery info...");
                 var output = await AdbHelper.RunAdbCaptureAsync($"-s {currentDevice} shell dumpsys battery");
                 var batteryInfo = ParseBatteryInfo(output);
+
+                Debugger.show($"Battery parsed: Level={batteryInfo.Level}, Charging={batteryInfo.IsCharging}, Wattage={batteryInfo.Wattage}");
 
                 if (batteryInfo.Level < 0)
                 {
@@ -267,9 +299,10 @@ namespace phone_utils
                 SetBatteryStatus(displayText, GetBatteryColor(batteryInfo.Level));
                 CheckBatteryWarnings(batteryInfo.Level, batteryInfo.IsCharging);
             }
-            catch
+            catch (Exception ex)
             {
                 SetBatteryStatus("Error", Colors.Gray);
+                Debugger.show($"Failed to update battery status: {ex.Message}");
             }
         }
 
@@ -400,7 +433,10 @@ namespace phone_utils
 
         private async Task UpdateCurrentSongAsync()
         {
+            Debugger.show("Updating current song from Musicolet...");
+
             string output = await AdbHelper.RunAdbCaptureAsync($"-s {currentDevice} shell dumpsys media_session");
+            Debugger.show($"Media session output:\n{output}");
 
             bool foundActiveSong = false;
 
@@ -427,6 +463,8 @@ namespace phone_utils
                     if (!string.IsNullOrEmpty(title) && !string.IsNullOrEmpty(artist))
                     {
                         DeviceStatusText.Text = $"Song: {title} by {artist}";
+                        Debugger.show($"Now playing: {title} by {artist} ({album})");
+
                         UpdateMediaControls(title, artist, album);
                         foundActiveSong = true;
                         break; // exit after first active song
@@ -437,6 +475,7 @@ namespace phone_utils
             if (!foundActiveSong)
             {
                 DeviceStatusText.Text = "No song currently playing in Musicolet.";
+                Debugger.show("No active song found");
                 ClearMediaControls(); // ensures SMTC is cleared
             }
         }
@@ -512,12 +551,13 @@ namespace phone_utils
             }
             catch (Exception ex)
             {
-                if (debugmode) Console.WriteLine($"MediaPlayer initialization failed: {ex.Message}");
+                Debugger.show($"MediaPlayer initialization failed: {ex.Message}");
             }
         }
 
         private async void smtcControls_ButtonPressed(SystemMediaTransportControls sender, SystemMediaTransportControlsButtonPressedEventArgs args)
         {
+            Debugger.show($"SMTC Button Pressed: {args.Button}");
             // SMTC events come in on a background thread
             await Dispatcher.InvokeAsync(() =>
             {
@@ -547,27 +587,27 @@ namespace phone_utils
         {
             await AdbHelper.RunAdbAsync($"-s {currentDevice} shell input keyevent 85");
             smtcControls.PlaybackStatus = MediaPlaybackStatus.Playing;
-            if (debugmode) Console.WriteLine("Play requested");
+            Debugger.show("Play requested");
         }
         private async void PauzeTrack()
         {
             await AdbHelper.RunAdbAsync($"-s {currentDevice} shell input keyevent 85");
             smtcControls.PlaybackStatus = MediaPlaybackStatus.Paused;
-            if (debugmode) Console.WriteLine("Pause requested.");
+            Debugger.show("Pause requested.");
         }
         private async void PlayNextTrack()
         {
             await AdbHelper.RunAdbAsync($"-s {currentDevice} shell input keyevent 87");
             Thread.Sleep(500);
             await UpdateCurrentSongAsync();
-            if (debugmode) Console.WriteLine("Next track requested.");
+            Debugger.show("Next track requested.");
         }
         private async void PlayPreviousTrack()
         {
             await AdbHelper.RunAdbAsync($"-s {currentDevice} shell input keyevent 88");
             Thread.Sleep(500);
             await UpdateCurrentSongAsync();
-            if (debugmode) Console.WriteLine("Previous track requested.");
+            Debugger.show("Previous track requested.");
         }
 
 
@@ -589,28 +629,29 @@ namespace phone_utils
             string[] audioExtensions = { ".mp3", ".flac", ".wav", ".m4a", ".ogg", ".opus" };
             string filePath = null;
 
-            foreach (var ext in audioExtensions)
-            {
-                string path = Path.Combine(folderPath, fileNameWithoutExtension + ext);
-                if (File.Exists(path))
-                {
-                    filePath = path;
-                    break;
-                }
-            }
-
-            string defaultImagePath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "Phone Utils", "Resources", "logo.png"
-            );
-
             try
             {
+                // Search recursively for the file
+                foreach (var ext in audioExtensions)
+                {
+                    var files = Directory.GetFiles(folderPath, fileNameWithoutExtension + ext, SearchOption.AllDirectories);
+                    if (files.Length > 0)
+                    {
+                        filePath = files[0]; // Take the first match
+                        break;
+                    }
+                }
+
+                string defaultImagePath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "Phone Utils", "Resources", "logo.png"
+                );
+
                 StorageFile imageFile;
 
                 if (string.IsNullOrEmpty(filePath))
                 {
-                    if (debugmode) Console.WriteLine("No audio file found. Using default image.");
+                    Debugger.show("No audio file found. Using default image.");
                     imageFile = await StorageFile.GetFileFromPathAsync(defaultImagePath);
                 }
                 else
@@ -626,7 +667,7 @@ namespace phone_utils
                     }
                     else
                     {
-                        if (debugmode) Console.WriteLine("No cover art found. Using default image.");
+                        Debugger.show("No cover art found. Using default image.");
                         imageFile = await StorageFile.GetFileFromPathAsync(defaultImagePath);
                     }
                 }
@@ -636,9 +677,11 @@ namespace phone_utils
             }
             catch (Exception ex)
             {
-                if (debugmode) Console.WriteLine($"Failed to set SMTC image: {ex.Message}");
+                
+                Debugger.show($"Failed to set SMTC image: {ex.Message}");
             }
         }
+
 
 
 
@@ -689,8 +732,7 @@ namespace phone_utils
             }
             catch (Exception ex)
             {
-                if (debugmode)
-                    Console.WriteLine($"Failed to clear media controls: {ex.Message}");
+                Debugger.show($"Failed to clear media controls: {ex.Message}");
             }
         }
 

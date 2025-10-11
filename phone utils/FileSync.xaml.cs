@@ -194,17 +194,22 @@ namespace phone_utils
 
         public async Task SyncMusicToPcAsync(CancellationToken token)
         {
+            Debugger.show("Entered SyncMusicToPcAsync");
+
             if (string.IsNullOrEmpty(CurrentDevice))
             {
+                Debugger.show("No device selected - exiting SyncMusicToPcAsync");
                 MessageBox.Show("No device selected.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             string remoteDir = RemoteDirTextBox.Text.Trim();
             string localDir = LocalDirTextBox.Text.Trim();
+            Debugger.show($"RemoteDir='{remoteDir}', LocalDir='{localDir}'");
 
             if (string.IsNullOrEmpty(remoteDir) || string.IsNullOrEmpty(localDir))
             {
+                Debugger.show("Remote or local directory missing");
                 MessageBox.Show("Please select both local and remote directories.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -212,6 +217,7 @@ namespace phone_utils
             SaveDirectoryPaths();
             Directory.CreateDirectory(localDir);
 
+            Debugger.show("Fetching remote file list from device...");
             StatusLog.Items.Clear();
             SuccessList.Items.Clear();
             FailedList.Items.Clear();
@@ -222,6 +228,7 @@ namespace phone_utils
             string lsCommand = FolderRecursionCheckBox.IsChecked == true ? "ls -lR" : "ls -l";
             string fileListOutput = await RunAdbCaptureAsync($"-s {CurrentDevice} shell {lsCommand} \"{remoteDir}\"");
 
+            Debugger.show("Parsing adb ls output...");
             var lines = fileListOutput.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
             var lsRegex = new Regex(@"^(?<type>[-d])([rwx-]{9})\s+\d+\s+\S+\s+\S+\s+\d+\s+(?<date>\d{4}-\d{2}-\d{2})\s+(?<time>\d{2}:\d{2})\s+(?<name>.+)$", RegexOptions.Compiled);
 
@@ -251,7 +258,7 @@ namespace phone_utils
                 if (type == "d")
                     folderDates[fullRemotePath] = fileDate;
             }
-
+            Debugger.show($"Total items found: {items.Count}");
             int totalItems = items.Count;
             int currentIndex = 0;
 
@@ -265,6 +272,7 @@ namespace phone_utils
 
                 if (FolderRecursionCheckBox.IsChecked != true && Path.GetDirectoryName(relativePath) != "")
                 {
+                    Debugger.show($"Skipping subfolder file {relativePath}");
                     StatusLog.Items.Add($"Skipping subfolder file {currentIndex}/{totalItems}: {relativePath}");
                     StatusLog.ScrollIntoView(StatusLog.Items[StatusLog.Items.Count - 1]);
                     continue;
@@ -276,6 +284,7 @@ namespace phone_utils
                     {
                         Directory.CreateDirectory(localPath);
                         File.SetLastWriteTime(localPath, item.Date);
+                        Debugger.show($"Created directory: {relativePath}");
                         StatusLog.Items.Add($"Created folder {currentIndex}/{totalItems}: {relativePath}");
                         StatusLog.ScrollIntoView(StatusLog.Items[StatusLog.Items.Count - 1]);
                     }
@@ -284,6 +293,7 @@ namespace phone_utils
 
                 if (File.Exists(localPath))
                 {
+                    Debugger.show($"Skipping existing file {relativePath}");
                     StatusLog.Items.Add($"Skipping existing file {currentIndex}/{totalItems}: {relativePath}");
                     StatusLog.ScrollIntoView(StatusLog.Items[StatusLog.Items.Count - 1]);
                     await Task.Delay(50, token);
@@ -291,7 +301,7 @@ namespace phone_utils
                 }
 
                 Directory.CreateDirectory(Path.GetDirectoryName(localPath)!);
-
+                Debugger.show($"Pulling file: {relativePath}");
                 StatusLog.Items.Add($"Pulling {currentIndex}/{totalItems}: {relativePath}...");
                 StatusLog.ScrollIntoView(StatusLog.Items[StatusLog.Items.Count - 1]);
                 await Task.Delay(50, token);
@@ -311,6 +321,7 @@ namespace phone_utils
                     else
                         failureReason = "File not found after pull";
 
+                    Debugger.show($"Failed to pull {relativePath}: {failureReason}");
                     FailedList.Items.Add($"{relativePath} - {failureReason}");
                     FailedList.ScrollIntoView(FailedList.Items[FailedList.Items.Count - 1]);
 
@@ -319,6 +330,7 @@ namespace phone_utils
                 }
                 else
                 {
+                    Debugger.show($"Successfully pulled {relativePath}");
                     SuccessList.Items.Add(relativePath);
                     SuccessList.ScrollIntoView(SuccessList.Items[SuccessList.Items.Count - 1]);
 
@@ -331,6 +343,7 @@ namespace phone_utils
                 await Task.Delay(50, token);
             }
 
+            Debugger.show("Completed SyncMusicToPcAsync successfully");
             StatusLog.Items.Add("Done syncing music.");
             StatusLog.ScrollIntoView(StatusLog.Items[StatusLog.Items.Count - 1]);
         }
@@ -339,6 +352,7 @@ namespace phone_utils
 
         public async Task SyncMusicToPhoneAsync(CancellationToken token)
         {
+            Debugger.show("Entered SyncMusicToPhoneAsync");
             if (string.IsNullOrEmpty(CurrentDevice))
             {
                 MessageBox.Show("No device selected.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -347,9 +361,11 @@ namespace phone_utils
 
             string remoteDir = RemoteDirTextBox.Text.Trim();
             string localDir = LocalDirTextBox.Text.Trim();
+            Debugger.show($"RemoteDir='{remoteDir}', LocalDir='{localDir}'");
 
             if (string.IsNullOrEmpty(remoteDir) || string.IsNullOrEmpty(localDir))
             {
+                Debugger.show("Missing directory selection");
                 MessageBox.Show("Please select both local and remote directories.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -358,10 +374,11 @@ namespace phone_utils
 
             if (!Directory.Exists(localDir))
             {
+                Debugger.show($"Local directory does not exist: {localDir}");
                 MessageBox.Show("Local directory does not exist.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-
+            Debugger.show("Starting local file enumeration...");
             StatusLog.Items.Clear();
             SuccessList.Items.Clear();
             FailedList.Items.Clear();
@@ -371,6 +388,7 @@ namespace phone_utils
 
             var searchOption = FolderRecursionCheckBox.IsChecked == true ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
             var localFiles = Directory.GetFiles(localDir, "*.*", searchOption);
+            Debugger.show($"Total local files found: {localFiles.Length}");
             int totalFiles = localFiles.Length;
             int currentIndex = 0;
 
@@ -387,11 +405,13 @@ namespace phone_utils
                 string remoteFile = $"{remoteDir}/{relativePath}";
                 string remoteFolder = Path.GetDirectoryName(remoteFile).Replace("\\", "/");
 
-                await RunAdbCaptureAsync($"-s {CurrentDevice} shell mkdir -p \"{EscapeForShell(remoteFolder)}\"");
+                Debugger.show($"Pushing file {currentIndex}/{totalFiles}: {relativePath}");
 
+                await RunAdbCaptureAsync($"-s {CurrentDevice} shell mkdir -p \"{EscapeForShell(remoteFolder)}\"");
                 string checkOutput = await RunAdbCaptureAsync($"-s {CurrentDevice} shell ls \"{EscapeForShell(remoteFile)}\"");
                 if (!string.IsNullOrWhiteSpace(checkOutput) && !checkOutput.Contains("No such file"))
                 {
+                    Debugger.show($"Skipping existing file on device: {relativePath}");
                     StatusLog.Items.Add($"Skipping existing file {currentIndex}/{totalFiles}: {relativePath}");
                     StatusLog.ScrollIntoView(StatusLog.Items[StatusLog.Items.Count - 1]);
                     await Task.Delay(50, token);
@@ -403,12 +423,12 @@ namespace phone_utils
                 await Task.Delay(50, token);
 
                 string pushOutput = await RunAdbCaptureAsync($"-s {CurrentDevice} push \"{localFile}\" \"{remoteFile}\"");
-
                 string verifyOutput = await RunAdbCaptureAsync($"-s {CurrentDevice} shell ls \"{EscapeForShell(remoteFile)}\"");
 
                 if (string.IsNullOrWhiteSpace(verifyOutput) || verifyOutput.Contains("No such file"))
                 {
                     string failureReason = string.IsNullOrWhiteSpace(pushOutput) ? "ADB returned no output" : "ADB push failed";
+                    Debugger.show($"Failed to push {relativePath}: {failureReason}");
                     FailedList.Items.Add($"{relativePath} - {failureReason}");
                     FailedList.ScrollIntoView(FailedList.Items[FailedList.Items.Count - 1]);
                     StatusLog.Items.Add($"Failed to push {currentIndex}/{totalFiles}: {relativePath} ({failureReason})");
@@ -416,6 +436,7 @@ namespace phone_utils
                 }
                 else
                 {
+                    Debugger.show($"Successfully pushed {relativePath}");
                     DateTime lastWriteLocal = File.GetLastWriteTime(localFile);
                     DateTime lastWriteUtc = lastWriteLocal.ToUniversalTime();
                     TimeSpan deviceOffset = TimeZoneInfo.Local.GetUtcOffset(lastWriteLocal);
@@ -451,7 +472,7 @@ namespace phone_utils
                     await RunAdbCaptureAsync($"-s {CurrentDevice} shell touch -t {adbTimeStr} \"{EscapeForShell(remoteFolder)}\"");
                 }
             }
-
+            Debugger.show("Completed SyncMusicToPhoneAsync successfully");
             StatusLog.Items.Add("Done syncing music to phone.");
             StatusLog.ScrollIntoView(StatusLog.Items[StatusLog.Items.Count - 1]);
         }

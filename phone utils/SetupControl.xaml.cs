@@ -27,6 +27,8 @@ namespace phone_utils
             InitializeComponent();
             _main = main;
 
+
+            Debugger.show("SetupControl initialized. Loading configuration from: " + configPath); // Trace initialization
             _config = ConfigManager.Load(configPath);
             ApplyConfigToUI();
         }
@@ -34,6 +36,7 @@ namespace phone_utils
         #region UI Initialization
         private void ApplyConfigToUI()
         {
+            Debugger.show("Applying configuration to UI."); // Trace applying config
             string resourcesDir = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 "Phone Utils",
@@ -44,10 +47,12 @@ namespace phone_utils
             _config.Paths.Adb = string.IsNullOrEmpty(_config.Paths.Adb) || _config.Paths.Adb.Contains("PhoneUtils")
                 ? Path.Combine(resourcesDir, "adb.exe")
                 : _config.Paths.Adb;
+            Debugger.show("ADB Path set to: " + _config.Paths.Adb); // Trace ADB path
 
             _config.Paths.Scrcpy = string.IsNullOrEmpty(_config.Paths.Scrcpy) || _config.Paths.Scrcpy.Contains("PhoneUtils")
                 ? Path.Combine(resourcesDir, "scrcpy.exe")
                 : _config.Paths.Scrcpy;
+            Debugger.show("Scrcpy Path set to: " + _config.Paths.Scrcpy); // Trace Scrcpy path
 
             TxtAdbPath.Text = _config.Paths.Adb;
             TxtScrcpyPath.Text = _config.Paths.Scrcpy;
@@ -61,6 +66,7 @@ namespace phone_utils
                 DeviceSelector.SelectedValue = _config.SelectedDeviceUSB;
                 TxtPincode.Password = _config.SavedDevices
                     .FirstOrDefault(d => d.UsbSerial == _config.SelectedDeviceUSB)?.Pincode ?? string.Empty;
+                Debugger.show("Selected device set: " + _config.SelectedDeviceUSB); // Trace selected device
             }
 
             ToggleDevMode(_config.SpecialOptions.DevMode);
@@ -68,6 +74,7 @@ namespace phone_utils
 
         private void ApplyButtonColors(ButtonStyleConfig style)
         {
+            Debugger.show("Applying button colors."); // Trace button color application
             Application.Current.Resources["ButtonBackground"] = (SolidColorBrush)new BrushConverter().ConvertFromString(style.Background);
             Application.Current.Resources["ButtonForeground"] = (SolidColorBrush)new BrushConverter().ConvertFromString(style.Foreground);
             Application.Current.Resources["ButtonHover"] = (SolidColorBrush)new BrushConverter().ConvertFromString(style.Hover);
@@ -79,6 +86,7 @@ namespace phone_utils
 
         private void ToggleDevMode(bool enabled)
         {
+            Debugger.show("ToggleDevMode called. Enabled: " + enabled); // Trace devmode toggle
             Visibility devVisibility = enabled ? Visibility.Visible : Visibility.Collapsed;
             AdbPathPanel.Visibility = devVisibility;
             ScrcpyPathPanel.Visibility = devVisibility;
@@ -91,7 +99,9 @@ namespace phone_utils
         private string BrowseFile(string filter)
         {
             var dlg = new OpenFileDialog { Filter = filter };
-            return dlg.ShowDialog() == true ? dlg.FileName : string.Empty;
+            var result = dlg.ShowDialog() == true ? dlg.FileName : string.Empty;
+            Debugger.show("BrowseFile selected: " + result); // Trace file selected
+            return result;
         }
 
         private void BrowseAdb(object sender, RoutedEventArgs e) => TxtAdbPath.Text = BrowseFile("ADB Executable|adb.exe");
@@ -99,6 +109,7 @@ namespace phone_utils
         private void BrowseBackground(object sender, RoutedEventArgs e)
         {
             TxtBackground.Text = BrowseFile("Supported Images|*.jpg;*.png|Jpeg file(*.jpg)|*.jpg|Png file(*.png)|*.png|All files|*.*");
+            Debugger.show("Background selected: " + TxtBackground.Text); // Trace background selection
             UpdateConfigFromUI();
             SaveConfig(false);
         }
@@ -107,12 +118,14 @@ namespace phone_utils
         #region Config Save / Reload
         private void SaveConfiguration(object sender, RoutedEventArgs e)
         {
+            Debugger.show("SaveConfiguration triggered."); // Trace save trigger
             UpdateConfigFromUI();
             SaveConfig(true);
         }
 
         private void UpdateConfigFromUI()
         {
+            Debugger.show("Updating config from UI."); // Trace updating config from UI
             _config.Paths.Adb = TxtAdbPath.Text;
             _config.Paths.Scrcpy = TxtScrcpyPath.Text;
             _config.Paths.Background = TxtBackground.Text;
@@ -123,6 +136,7 @@ namespace phone_utils
                 _config.SelectedDeviceName = selDev.Name;
                 _config.SelectedDeviceWiFi = selDev.TcpIp;
                 _config.SelectedDevicePincode = selDev.Pincode;
+                Debugger.show("Device selection updated: " + selDev.UsbSerial); // Trace selected device update
             }
         }
 
@@ -134,13 +148,15 @@ namespace phone_utils
                 if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
 
                 ConfigManager.Save(configPath, _config);
+                Debugger.show("Configuration saved to: " + configPath); // Trace config save
                 _main.ReloadConfiguration();
-                if (showmessage == true)
+                if (showmessage)
                     MessageBox.Show("Configuration saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Failed to save configuration: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Debugger.show("SaveConfig exception: " + ex.Message); // Trace save exception
             }
         }
 
@@ -154,6 +170,7 @@ namespace phone_utils
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question
             );
+            Debugger.show("DevMode checked. User confirmation: " + result); // Trace devmode check and confirmation
             if (result == MessageBoxResult.Yes)
             {
                 ToggleDevMode(isChecked);
@@ -169,6 +186,7 @@ namespace phone_utils
         {
             bool isChecked = ChkDevmode.IsChecked == true;
             _config.SpecialOptions.DevMode = false;
+            Debugger.show("DevMode unchecked."); // Trace devmode uncheck
             ToggleDevMode(isChecked);
             SaveConfig(false);
         }
@@ -177,27 +195,29 @@ namespace phone_utils
         #region Device Management
         private async Task<string> GetDeviceIpAsync(string serial)
         {
+            Debugger.show("Getting IP for device: " + serial); // Trace IP fetch
             string output = await AdbHelper.RunAdbCaptureAsync($"-s {serial} shell ip addr show wlan0");
 
             var match = Regex.Match(output, @"inet (\d+\.\d+\.\d+\.\d+)/");
+            Debugger.show("IP result: " + (match.Success ? match.Groups[1].Value : "null")); // Trace IP parsing
             return match.Success ? match.Groups[1].Value : null;
         }
 
         private async Task<string> GetFirstUsbSerialAsync()
         {
             string output = await AdbHelper.RunAdbCaptureAsync("devices");
-
-            if (MainWindow.debugmode)
-            {
-                Debug.WriteLine($"ADB devices output:\n{output}");
-            }
+            Debugger.show("ADB devices output:\n" + output); // Trace adb devices
 
             foreach (var line in output.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
             {
                 if (line.EndsWith("\tdevice"))
+                {
+                    Debugger.show("First USB device found: " + line.Split('\t')[0]); // Trace first USB serial
                     return line.Split('\t')[0];
+                }
             }
 
+            Debugger.show("No USB device found."); // Trace no device
             return null;
         }
 
@@ -208,6 +228,7 @@ namespace phone_utils
             if (string.IsNullOrWhiteSpace(adbPath) || !File.Exists(adbPath))
             {
                 MessageBox.Show("Please select a valid adb.exe path first.", "ADB Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
+                Debugger.show("Invalid ADB path: " + adbPath); // Trace invalid adb path
                 return;
             }
 
@@ -222,6 +243,7 @@ namespace phone_utils
             string ip = await GetDeviceIpAsync(serial);
 
             string tcpIpWithPort;
+
 
             if (string.IsNullOrEmpty(ip))
             {
@@ -240,10 +262,12 @@ namespace phone_utils
                 }
 
                 tcpIpWithPort = "None";
+                Debugger.show($"Device IP: {ip}, TCP: {tcpIpWithPort}"); // Trace IP or USB-only
             }
             else
             {
                 tcpIpWithPort = $"{ip}:5555";
+                Debugger.show($"Device IP: {ip}, TCP: {tcpIpWithPort}"); // Trace IP or USB-only
             }
 
             string name = TxtDeviceName.Text.Trim();
@@ -262,11 +286,15 @@ namespace phone_utils
                 LastConnected = DateTime.Now,
                 Pincode = TxtPincode.Password
             };
+            Debugger.show("New device created: " + newDevice.UsbSerial + ", Name: " + newDevice.Name); // Trace new device
 
             // Remove existing device with same serial
             var existing = _config.SavedDevices.FirstOrDefault(d => d.UsbSerial == serial);
             if (existing != null)
+            {
                 _config.SavedDevices.Remove(existing);
+                Debugger.show("Removed existing device with same serial: " + serial); // Trace removal
+            }
 
             _config.SavedDevices.Add(newDevice);
             UpdateSelectedDevice(newDevice);
@@ -284,6 +312,7 @@ namespace phone_utils
                 ? "Device saved successfully as USB only."
                 : $"Device saved successfully. Detected IP: {tcpIpWithPort}";
 
+            Debugger.show(msg); // Trace success message
             MessageBox.Show(msg, "Success", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
@@ -292,6 +321,7 @@ namespace phone_utils
 
         private void UpdateSelectedDevice(DeviceConfig device)
         {
+            Debugger.show("Updating selected device: " + device.UsbSerial); // Trace update selected device
             _config.SelectedDeviceUSB = device.UsbSerial;
             _config.SelectedDeviceName = device.Name;
             _config.SelectedDeviceWiFi = device.TcpIp;
@@ -314,6 +344,7 @@ namespace phone_utils
             if (result != MessageBoxResult.Yes) return;
 
             _config.SavedDevices.Remove(selectedDevice);
+            Debugger.show("Deleted device: " + selectedDevice.UsbSerial); // Trace deletion
 
             if (_config.SelectedDeviceUSB == selectedDevice.UsbSerial)
             {
@@ -322,6 +353,7 @@ namespace phone_utils
                 _config.SelectedDeviceName = string.Empty;
                 _config.SelectedDeviceWiFi = string.Empty;
                 _config.SelectedDevicePincode = string.Empty;
+                Debugger.show("Cleared current selected device as it was deleted."); // Trace clear selection
             }
 
             DeviceSelector.SelectionChanged -= DeviceSelector_SelectionChanged;
@@ -337,6 +369,7 @@ namespace phone_utils
         {
             if (DeviceSelector.SelectedItem is DeviceConfig selectedDevice)
             {
+                Debugger.show("DeviceSelector changed to: " + selectedDevice.UsbSerial); // Trace selection change
                 UpdateSelectedDevice(selectedDevice);
                 UpdateConfigFromUI();
                 SaveConfig(false);
@@ -347,6 +380,7 @@ namespace phone_utils
         #region Color Pickers
         private void PickColor(SolidColorBrush currentBrush, Action<Color> apply)
         {
+            Debugger.show("Opening color picker."); // Trace color picker open
             var picker = new ColorPickerWindow(currentBrush.Color);
             if (picker.ShowDialog() == true)
             {
@@ -465,8 +499,16 @@ namespace phone_utils
 
             public static void Save(string path, AppConfig config)
             {
-                try { File.WriteAllText(path, JsonConvert.SerializeObject(config, Formatting.Indented)); }
-                catch (Exception ex) { MessageBox.Show($"Failed to save configuration: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error); }
+                try 
+                { 
+                    File.WriteAllText(path, JsonConvert.SerializeObject(config, Formatting.Indented));
+                    Debugger.show("ConfigManager.Save completed for: " + path);
+                }
+                catch (Exception ex) 
+                { 
+                    MessageBox.Show($"Failed to save configuration: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    Debugger.show("ConfigManager.Save exception: " + ex.Message);
+                }
             }
         }
         #endregion

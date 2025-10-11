@@ -32,8 +32,7 @@ namespace phone_utils
                 }
                 catch (Exception ex)
                 {
-                    if (MainWindow.debugmode)
-                        Debug.WriteLine($"ADB error: {ex.Message}");
+                    Debugger.show($"ADB error: {ex.Message}");
                 }
             });
         }
@@ -66,11 +65,7 @@ namespace phone_utils
                 }
                 catch (Exception ex)
                 {
-                    if (MainWindow.debugmode)
-                    {
-                        Debug.WriteLine($"ADB error: {ex.Message}");
-                        return ex.ToString();
-                    }
+                    Debugger.show($"ADB error: {ex.Message}");
                     return "";
                 }
             });

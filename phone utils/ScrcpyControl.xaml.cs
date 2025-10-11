@@ -35,11 +35,14 @@ namespace phone_utils
             BtnStartScrcpy.Click += BtnStartScrcpy_Click;
             this.Loaded += ScrcpyControl_Loaded;
 
+
+            Debugger.show("ScrcpyControl initialized with device: " + _device); // Added to trace initialization
             LoadSavedSettings();
         }
 
         private void ScrcpyControl_Loaded(object sender, RoutedEventArgs e)
         {
+            Debugger.show("ScrcpyControl loaded, hotkeysEnabled: " + _hotkeysEnabled); // Trace control load
             if (_hotkeysEnabled) InitializeGlobalHotkeys();
             LoadInstalledApps();
         }
@@ -51,7 +54,11 @@ namespace phone_utils
             try
             {
                 var parentWindow = Window.GetWindow(this);
-                if (parentWindow == null) return;
+                if (parentWindow == null) 
+                {
+                    Debugger.show("Parent window is null, skipping hotkey initialization."); // Trace null parent
+                    return;
+                }
 
                 _hotkeyManager?.Dispose();
                 _hotkeyManager = new GlobalHotkeyManager(parentWindow);
@@ -65,33 +72,40 @@ namespace phone_utils
                 _hotkeyManager.PageUpPressed += () => LaunchApp("anddea.youtube");
                 _hotkeyManager.PageDownPressed += () => LaunchApp("in.krosbits.musicolet");
                 _hotkeyManager.EndPressed += () => LaunchApp("com.anilab.android");
+
+                Debugger.show("Global hotkeys initialized."); // Confirm hotkey setup
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Failed to initialize hotkeys: {ex.Message}", "Hotkey Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                Debugger.show("Hotkey initialization error: " + ex.Message); // Trace hotkey exception
             }
         }
 
         private void UnregisterGlobalHotkeys()
         {
+            Debugger.show("Unregistering global hotkeys."); // Trace hotkey cleanup
             _hotkeyManager?.Dispose();
             _hotkeyManager = null;
         }
 
         private async Task RunAdbKeyEvent(int keyCode)
         {
+            Debugger.show("RunAdbKeyEvent called with keyCode: " + keyCode); // Trace key events
             if (!_hotkeysEnabled || string.IsNullOrEmpty(_device)) return;
             await AdbHelper.RunAdbAsync($"-s {_device} shell input keyevent {keyCode}");
         }
 
         private async void OnInsertPressed()
         {
+            Debugger.show("unlocking phone."); // Trace Insert pressed
             if (!_hotkeysEnabled || string.IsNullOrEmpty(_device) || _device.Contains(":")) return;
             await AdbHelper.RunAdbAsync($"-s {_device} shell input text {_appConfig.SelectedDevicePincode}");
         }
 
         private async Task LaunchApp(string packageName)
         {
+            Debugger.show("Launching app: " + packageName); // Trace which app is being launched
             if (!_hotkeysEnabled || string.IsNullOrEmpty(_device)) return;
             await AdbHelper.RunAdbAsync($"-s {_device} shell monkey -p {packageName} -c android.intent.category.LAUNCHER 1");
         }
@@ -101,6 +115,7 @@ namespace phone_utils
 
         private void ToggleHotkeys(bool enabled)
         {
+            Debugger.show("ToggleHotkeys called. Enabled: " + enabled); // Trace toggle action
             _hotkeysEnabled = enabled;
             if (enabled) InitializeGlobalHotkeys();
             else UnregisterGlobalHotkeys();
@@ -115,6 +130,7 @@ namespace phone_utils
             if (_suppressEvents) return;
 
             _suppressEvents = true;
+            Debugger.show("ChkAudio_Checked fired for: " + (sender as CheckBox)?.Name); // Trace which checkbox triggered
 
             switch ((sender as CheckBox)?.Name)
             {
@@ -145,11 +161,13 @@ namespace phone_utils
             if (_suppressEvents) return;
 
             _suppressEvents = true;
+            Debugger.show("ChkAudio_Unchecked fired for: " + (sender as CheckBox)?.Name); // Trace checkbox uncheck
 
             if (ChkNoAudio.IsChecked == false && ChkPlaybackAudio.IsChecked == false && ChkAudioOnly.IsChecked == false)
             {
                 var chk = sender as CheckBox;
                 chk.IsChecked = true;
+                Debugger.show("Reverting unchecked to true for: " + chk.Name); // Trace auto-reset
             }
 
             _suppressEvents = false;
@@ -161,6 +179,7 @@ namespace phone_utils
 
         private void LoadSavedSettings()
         {
+            Debugger.show("Loading saved settings..."); // Trace loading settings
             var settings = _appConfig.ScrcpySettings;
 
             ChkAudioOnly.IsChecked = settings.AudioOnly;
@@ -189,10 +208,13 @@ namespace phone_utils
                 (SolidColorBrush)new BrushConverter().ConvertFromString(_appConfig.ButtonStyle.Foreground);
             Application.Current.Resources["ButtonHover"] =
                 (SolidColorBrush)new BrushConverter().ConvertFromString(_appConfig.ButtonStyle.Hover);
+
+            Debugger.show("Saved settings applied."); // Confirm settings applied
         }
 
         private void SaveCurrentSettings()
         {
+            Debugger.show("Saving current settings..."); // Trace saving settings
             var settings = _appConfig.ScrcpySettings;
 
             settings.AudioOnly = ChkAudioOnly.IsChecked == true;
@@ -216,6 +238,7 @@ namespace phone_utils
             if (!Directory.Exists(Path.GetDirectoryName(configPath))) Directory.CreateDirectory(Path.GetDirectoryName(configPath));
 
             ConfigManager.Save(configPath, _appConfig);
+            Debugger.show("Settings saved to " + configPath); // Confirm where settings were saved
         }
 
         #endregion
@@ -224,6 +247,7 @@ namespace phone_utils
 
         private async Task LaunchScrcpyAsync(List<string> args)
         {
+            Debugger.show("Launching scrcpy with args: " + string.Join(" ", args)); // Trace scrcpy launch args
             SaveCurrentSettings();
             string finalArgs = string.Join(" ", args);
             await RunScrcpyAsync(finalArgs);
@@ -246,6 +270,7 @@ namespace phone_utils
             if (string.IsNullOrEmpty(_device))
             {
                 MessageBox.Show("No device connected!", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                Debugger.show("BtnStartScrcpy_Click aborted: no device."); // Trace missing device
                 return;
             }
 
@@ -258,7 +283,7 @@ namespace phone_utils
             var args = new List<string>();
             args.Add($"--window-title=\"{_appConfig.SelectedDeviceName}\"");
 
-
+            Debugger.show("Building scrcpy args. display=" + display + ", camera=" + camera); // Trace arg build
 
             if (ChkAudioOnly.IsChecked == true && !camera)
             {
@@ -305,11 +330,13 @@ namespace phone_utils
                 }
             }
 
+            Debugger.show("Final scrcpy args: " + string.Join(" ", args)); // Trace final args list
             return args;
         }
 
         public Task RunScrcpyAsync(string args)
         {
+            Debugger.show("RunScrcpyAsync called with args: " + args); // Trace scrcpy async launch
             _main.DeviceStatusText.Text = args.Contains("--no-audio")
                 ? "Device Status: Casting without audio"
                 : "Device Status: Casting with audio";
@@ -318,6 +345,7 @@ namespace phone_utils
             {
                 if (!File.Exists(_SCRCPY_PATH))
                 {
+                    Debugger.show("scrcpy.exe not found at path: " + _SCRCPY_PATH); // Trace missing executable
                     MessageBox.Show("scrcpy.exe not found!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
@@ -332,17 +360,23 @@ namespace phone_utils
                         UseShellExecute = false,
                         CreateNoWindow = true
                     };
+                    Debugger.show("Starting scrcpy process with command: " + psi.FileName + " " + psi.Arguments); // Trace process start
 
                     var scrcpyProcess = Process.Start(psi);
                     await Task.Delay(1000);
                     Dispatcher.Invoke(() => _main.DeviceStatusText.Text += " - Ready");
+                    Debugger.show("scrcpy process started successfully."); // Confirm process start
 
                     while (!scrcpyProcess.HasExited)
                         await Task.Delay(500);
+
+
+                    Debugger.show("scrcpy process exited."); // Trace exit
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show($"scrcpy launch failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    Debugger.show("scrcpy launch exception: " + ex.Message); // Trace exception
                 }
             });
         }
@@ -352,7 +386,13 @@ namespace phone_utils
 
         private async void LoadInstalledApps()
         {
-            if (string.IsNullOrEmpty(_device)) return;
+            Debugger.show("Loading installed apps..."); // Trace app loading start
+            if (string.IsNullOrEmpty(_device))
+            {
+                Debugger.show("LoadInstalledApps aborted: no device."); // Trace missing device
+                return;
+            }
+
 
             try
             {
@@ -364,15 +404,21 @@ namespace phone_utils
                                      .ToList();
 
                 CmbAndroidApps.ItemsSource = packages;
+                Debugger.show("Installed apps loaded: " + packages.Count + " apps."); // Confirm loaded apps
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Failed to load installed apps: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Debugger.show("LoadInstalledApps exception: " + ex.Message); // Trace exception
             }
         }
 
         #endregion
 
-        public void Dispose() => UnregisterGlobalHotkeys();
+        public void Dispose()
+        {
+            Debugger.show("Disposing ScrcpyControl, unregistering hotkeys."); // Trace dispose
+            UnregisterGlobalHotkeys();
+        }
     }
 }
