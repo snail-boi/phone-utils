@@ -20,6 +20,7 @@
 
 		<UIRef Id="WixUI_Minimal"/>
 		<WixVariable Id="WixUILicenseRtf" Value="license.rtf"/>
+		<WixVariable Id="WixUI_ThirdPartyLicenseRtf" Value="thirdparty_licenses.rtf"/>
 		<Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER"/>
 		
 		<!-- Directory structure -->
@@ -64,8 +65,18 @@
 						<File Id="TagLibSharpDll" Source="..\phone utils\bin\Debug\net8.0-windows10.0.19041.0\taglib-sharp.dll" KeyPath="yes"/>
 						<RegistryValue Root="HKLM" Key="Software\PhoneUtils\Resources" Name="TagLibSharpDll" Type="string" Value="1"/>
 					</Component>
+					<!-- License Component -->
+					<Component Id="LicenseRtfComponent" Guid="c1234567-89ab-4def-9012-345678abcdef">
+						<File Id="LicenseRtfFile" Source="..\phone utils\bin\Debug\net8.0-windows10.0.19041.0\license.rtf" KeyPath="yes"/>
+					</Component>
+					<!-- Third-Party Licenses Component -->
+					<Component Id="ThirdPartyLicensesComponent" Guid="d1234567-89ab-4def-9012-345678fedcba">
+						<File Id="ThirdPartyLicensesFile" Source="..\phone utils\bin\Debug\net8.0-windows10.0.19041.0\thirdparty_licenses.rtf" KeyPath="yes"/>
+					</Component>
+
 
 				</Directory>
+
 			</Directory>
 
 			<!-- Resources folder in per-user AppData -->
@@ -210,6 +221,10 @@
 
 			<ComponentRef Id="StartMenuShortcutComponent"/>
 			<ComponentRef Id="DesktopShortcutComponent"/>
+
+			<ComponentRef Id="LicenseRtfComponent"/>
+			<ComponentRef Id="ThirdPartyLicensesComponent"/>
+
 		</Feature>
 
 	</Product>

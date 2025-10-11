@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="license.rtf" />
     <None Remove="logo.ico" />
     <None Remove="Resources\adb.exe" />
     <None Remove="Resources\AdbWinApi.dll" />
@@ -38,9 +39,13 @@
     <None Remove="Resources\scrcpy.exe" />
     <None Remove="Resources\SDL2.dll" />
     <None Remove="Resources\swresample-5.dll" />
+    <None Remove="thirdparty_licenses.rtf" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="license.rtf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="logo.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -90,6 +95,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Resources\swresample-5.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="thirdparty_licenses.rtf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
