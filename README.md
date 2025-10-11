@@ -1,0 +1,57 @@
+# Phone Control GUI (C# WPF)
+
+This is a small C# WPF program that was made partially as a joke.
+
+It’s primarily a GUI for **scrcpy** and **ADB**, with some fun features:
+
+## Features
+
+- **Phone screencast**  
+  Minimal performance impact on the PC.
+
+- **File syncing service**  
+  Sync folders between phone and PC while preserving file dates.  
+  *(PC → phone sync is still a bit buggy.)*
+
+- **Simple app manager**  
+  Allows APK installations.
+
+- **Notification menu**
+
+- **Customizable button colors**  
+  Make your own style. You can also use a background, but it’s not recommended.
+
+- **Current app display**  
+  Shows which app is currently running on the connected device.
+
+- **Setup window**  
+  Configure multiple devices, name them, and select USB-only or USB + WiFi mode.  
+  Automatically switches between USB and WiFi if available.
+
+- **Global hotkeys**
+
+| Hotkey                   | Action |
+|---------------------------|--------|
+| Shift + Volume Up         | Increase phone volume |
+| Shift + Volume Down       | Decrease phone volume |
+| Shift + Next              | Next track on phone |
+| Shift + Previous          | Previous track on phone |
+| Shift + Pause             | Pause current media on phone |
+| Insert                    | Auto-unlock phone if a PIN is provided and USB is connected |
+| PageUp / PageDown / End   | Programmable to open any app |
+
+## Developer Mode Features
+
+*These can be enabled by checking the **DevMode** box in the setup window.*  
+Features marked `*DEVONLY*` will only work in DevMode.
+
+- **Music presence**  
+  Share the current media playing on your phone to Discord.
+
+- **SMTC**  
+  Makes phone media appear as if it’s playing on the PC (audio visualizers work).
+
+- **Expanded app manager**  
+  - Send basic YouTube download commands to YTdnlis `*DEVONLY*`  
+  - Send a mouse movement to wake up the PC from sleep `*DEVONLY*`  
+  - Textbox under the current device reflects media playing instead of the active app `*DEVONLY*`
