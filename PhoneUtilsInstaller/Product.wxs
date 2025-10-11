@@ -19,8 +19,10 @@
 
 
 		<UIRef Id="WixUI_Minimal"/>
-		<WixVariable Id="WixUILicenseRtf" Value="license.rtf"/>
-		<WixVariable Id="WixUI_ThirdPartyLicenseRtf" Value="thirdparty_licenses.rtf"/>
+		<WixVariable Id="WixUILicenseRtf"
+					 Value="..\phone utils\bin\Debug\net8.0-windows10.0.19041.0\license.rtf"/>
+
+
 		<Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER"/>
 		
 		<!-- Directory structure -->
