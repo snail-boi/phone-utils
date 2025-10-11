@@ -25,7 +25,7 @@ All rights reserved.
    In no event shall the copyright holder be liable for any damages arising from the use of the App or source code.
 
 6. GOVERNING LAW
-   This License is governed by the laws of [Your Country/State].
+   This License is governed by the laws of Belgium.
 
 ---
 
