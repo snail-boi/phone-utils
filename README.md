@@ -66,3 +66,4 @@ This software is provided under a **read-only, view-only license**:
 - You may not decompile or reverse-engineer the binaries beyond normal usage.  
 
 See [LICENSE.txt](LICENSE.txt) for full license terms.
+- Third-party components are licensed separately (see [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)).
