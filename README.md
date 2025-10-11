@@ -55,3 +55,14 @@ Features marked `*DEVONLY*` will only work in DevMode.
   - Send basic YouTube download commands to YTdnlis `*DEVONLY*`  
   - Send a mouse movement to wake up the PC from sleep `*DEVONLY*`  
   - Textbox under the current device reflects media playing instead of the active app `*DEVONLY*`
+
+## License
+
+This software is provided under a **read-only, view-only license**:
+
+- You may **view the source code** in this repository.  
+- You may **run the compiled binaries** for personal, non-commercial purposes.  
+- You may **not copy, modify, redistribute, or create derivative works** from the source code or binaries without explicit written permission.  
+- You may not decompile or reverse-engineer the binaries beyond normal usage.  
+
+See [LICENSE.txt](LICENSE.txt) for full license terms.
