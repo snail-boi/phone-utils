@@ -615,70 +615,215 @@ namespace phone_utils
 
         #region Media Controls Helper Methods
 
-        private async Task SetSMTCImageAsync(string fileNameWithoutExtension)
+        private async Task SetSMTCImageAsync(string fileNameWithoutExtension, string artist)
         {
-            // Ensure media player is initialized
             if (mediaPlayer == null || smtcDisplayUpdater == null)
             {
                 InitializeMediaPlayer();
                 if (mediaPlayer == null || smtcDisplayUpdater == null)
-                    return; // failed to initialize
+                {
+                    Debugger.show("Failed to initialize media player");
+                    return;
+                }
             }
 
-            string folderPath = @"C:\Users\wille\Desktop\Audio";
-            string[] audioExtensions = { ".mp3", ".flac", ".wav", ".m4a", ".ogg", ".opus" };
-            string filePath = null;
+            string folderPath = @"C:\Users\wille\Desktop\misc\images";
+            string[] audioExtensions = { ".mp3", ".flac", ".wav", ".m4a", ".ogg", ".opus", ".webp", ".png", ".jpg", ".jpeg" };
+            string[] imageExtensions = { ".webp", ".png", ".jpg", ".jpeg" };
 
             try
             {
-                // Search recursively for the file
+                Debugger.show($"Starting cover art search for: '{fileNameWithoutExtension}' by '{artist}'");
+
+                // === STEP 1: SONG SEARCH (partial match) ===
+                Debugger.show("Step 1.1: Searching for audio files (partial match)...");
+
+                List<string> matchingFiles = new List<string>();
                 foreach (var ext in audioExtensions)
                 {
-                    var files = Directory.GetFiles(folderPath, fileNameWithoutExtension + ext, SearchOption.AllDirectories);
-                    if (files.Length > 0)
+                    var files = Directory.GetFiles(folderPath, "*" + ext, SearchOption.AllDirectories)
+                        .Where(f => Path.GetFileNameWithoutExtension(f)
+                        .IndexOf(fileNameWithoutExtension, StringComparison.OrdinalIgnoreCase) >= 0)
+                        .ToList();
+
+                    matchingFiles.AddRange(files);
+                }
+
+                if (matchingFiles.Count == 0)
+                {
+                    Debugger.show("Step 1.1: No audio files found (partial match failed)");
+                    await SetDefaultImage();
+                    return;
+                }
+
+                Debugger.show($"Step 1.1: Found {matchingFiles.Count} file(s) matching partially");
+
+                // === STEP 2: OPTIONAL ARTIST FILTER (partial match) ===
+                List<string> artistMatches = new List<string>();
+
+                if (!string.IsNullOrEmpty(artist) && matchingFiles.Count > 1)
+                {
+                    Debugger.show($"Step 1.2: Filtering by artist (partial match): '{artist}'");
+
+                    artistMatches = matchingFiles
+                        .Where(f => f.IndexOf(artist, StringComparison.OrdinalIgnoreCase) >= 0)
+                        .ToList();
+
+                    foreach (var file in artistMatches)
                     {
-                        filePath = files[0]; // Take the first match
-                        break;
+                        Debugger.show($"Step 1.2: Artist partial match: {Path.GetFileName(file)}");
                     }
                 }
 
+                List<string> filesToProcess = artistMatches.Count > 0 ? artistMatches : matchingFiles;
+
+                // Prioritize subfolder files
+                var sortedFiles = filesToProcess.OrderByDescending(f =>
+                {
+                    string fileDir = Path.GetDirectoryName(f);
+                    return !fileDir.Equals(folderPath, StringComparison.OrdinalIgnoreCase);
+                }).ToList();
+
+                Debugger.show($"Step 2: Processing {sortedFiles.Count} file(s) (subfolder priority)");
+
+                // === STEP 3: TRY EACH FILE UNTIL COVER ART FOUND ===
+                foreach (var filePath in sortedFiles)
+                {
+                    Debugger.show($"Step 3: Processing file: {Path.GetFileName(filePath)}");
+
+                    StorageFile imageFile = await TryGetCoverArtForFile(filePath, folderPath, imageExtensions);
+
+                    if (imageFile != null)
+                    {
+                        smtcDisplayUpdater.Thumbnail = RandomAccessStreamReference.CreateFromFile(imageFile);
+                        smtcDisplayUpdater.Update();
+                        Debugger.show("SMTC image updated successfully");
+                        return;
+                    }
+
+                    Debugger.show($"Step 3: No cover art found for {Path.GetFileName(filePath)}, trying next file...");
+                }
+
+                Debugger.show("Step 3: All files exhausted, using default image");
+                await SetDefaultImage();
+            }
+            catch (Exception ex)
+            {
+                Debugger.show($"Critical error in SetSMTCImageAsync: {ex.Message}");
+                await SetDefaultImage();
+            }
+        }
+
+
+        private async Task<StorageFile> TryGetCoverArtForFile(string filePath, string folderPath, string[] imageExtensions)
+        {
+            string fileDirectory = Path.GetDirectoryName(filePath);
+            string fileName = Path.GetFileNameWithoutExtension(filePath);
+            bool isInSubfolder = !fileDirectory.Equals(folderPath, StringComparison.OrdinalIgnoreCase);
+
+            // === FILES IN SUBFOLDERS ===
+            if (isInSubfolder)
+            {
+                Debugger.show($"Step 2.2: File is in subfolder: {Path.GetFileName(fileDirectory)}");
+
+                // Try cover.jpg and cover.png first
+                string coverJpg = Path.Combine(fileDirectory, "cover.jpg");
+                string coverPng = Path.Combine(fileDirectory, "cover.png");
+
+                if (File.Exists(coverJpg))
+                {
+                    Debugger.show("Step 2.2: Found cover.jpg in subfolder");
+                    return await StorageFile.GetFileFromPathAsync(coverJpg);
+                }
+                else if (File.Exists(coverPng))
+                {
+                    Debugger.show("Step 2.2: Found cover.png in subfolder");
+                    return await StorageFile.GetFileFromPathAsync(coverPng);
+                }
+
+                Debugger.show("Step 2.2: No cover.jpg or cover.png found, trying TagLib");
+
+                // Fall back to TagLib for subfolder files
+                var tagLibImage = await TryExtractCoverFromTagLib(filePath);
+                if (tagLibImage != null)
+                {
+                    return tagLibImage;
+                }
+            }
+            // === FILES IN TOP-LEVEL FOLDER ===
+            else
+            {
+                Debugger.show("Step 2.1: File is in top-level folder, searching for image with same name");
+
+                foreach (var imgExt in imageExtensions)
+                {
+                    string imagePath = Path.Combine(fileDirectory, fileName + imgExt);
+                    if (File.Exists(imagePath))
+                    {
+                        Debugger.show($"Step 2.1: Cover art found: {Path.GetFileName(imagePath)}");
+                        return await StorageFile.GetFileFromPathAsync(imagePath);
+                    }
+                }
+
+                Debugger.show("Step 2.1: No cover art image found, trying TagLib");
+
+                // Fall back to TagLib for top-level files
+                var tagLibImage = await TryExtractCoverFromTagLib(filePath);
+                if (tagLibImage != null)
+                {
+                    return tagLibImage;
+                }
+            }
+
+            return null;
+        }
+
+        private async Task<StorageFile> TryExtractCoverFromTagLib(string filePath)
+        {
+            Debugger.show("Step 2.3: Attempting to extract cover art from file metadata using TagLib");
+
+            try
+            {
+                var tagFile = CoverArt.File.Create(filePath);
+                if (tagFile.Tag.Pictures != null && tagFile.Tag.Pictures.Length > 0)
+                {
+                    var pictureData = tagFile.Tag.Pictures[0].Data.Data;
+                    string tempPath = Path.Combine(Path.GetTempPath(), "smtc_cover.jpg");
+                    await File.WriteAllBytesAsync(tempPath, pictureData);
+                    Debugger.show("Step 2.3: Cover art extracted from metadata successfully");
+                    return await StorageFile.GetFileFromPathAsync(tempPath);
+                }
+                else
+                {
+                    Debugger.show("Step 2.3: No embedded cover art found in metadata");
+                }
+            }
+            catch (Exception tagEx)
+            {
+                Debugger.show($"Step 2.3: TagLib extraction failed: {tagEx.Message}");
+            }
+
+            return null;
+        }
+
+        private async Task SetDefaultImage()
+        {
+            try
+            {
                 string defaultImagePath = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                     "Phone Utils", "Resources", "logo.png"
                 );
 
-                StorageFile imageFile;
-
-                if (string.IsNullOrEmpty(filePath))
-                {
-                    Debugger.show("No audio file found. Using default image.");
-                    imageFile = await StorageFile.GetFileFromPathAsync(defaultImagePath);
-                }
-                else
-                {
-                    var tagFile = CoverArt.File.Create(filePath);
-
-                    if (tagFile.Tag.Pictures != null && tagFile.Tag.Pictures.Length > 0)
-                    {
-                        var pictureData = tagFile.Tag.Pictures[0].Data.Data;
-                        string tempPath = Path.Combine(Path.GetTempPath(), "smtc_cover.jpg");
-                        await File.WriteAllBytesAsync(tempPath, pictureData);
-                        imageFile = await StorageFile.GetFileFromPathAsync(tempPath);
-                    }
-                    else
-                    {
-                        Debugger.show("No cover art found. Using default image.");
-                        imageFile = await StorageFile.GetFileFromPathAsync(defaultImagePath);
-                    }
-                }
-
+                Debugger.show("Step 2.4: Using default image");
+                var imageFile = await StorageFile.GetFileFromPathAsync(defaultImagePath);
                 smtcDisplayUpdater.Thumbnail = RandomAccessStreamReference.CreateFromFile(imageFile);
                 smtcDisplayUpdater.Update();
+                Debugger.show("SMTC updated with default image");
             }
             catch (Exception ex)
             {
-                
-                Debugger.show($"Failed to set SMTC image: {ex.Message}");
+                Debugger.show($"Failed to set default image: {ex.Message}");
             }
         }
 
@@ -690,7 +835,7 @@ namespace phone_utils
 
         private void UpdateMediaControls(string title, string artist, string album)
         {
-            SetSMTCImageAsync(title);
+            SetSMTCImageAsync(title, artist);
             if (mediaPlayer == null || smtcDisplayUpdater == null)
                 return;
 
