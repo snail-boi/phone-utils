@@ -6,7 +6,7 @@
     <ProductVersion>3.10</ProductVersion>
     <ProjectGuid>7ac84941-c43e-49e3-9bf0-10cb00142c11</ProjectGuid>
     <SchemaVersion>2.0</SchemaVersion>
-    <OutputName>Phone Utils Installer V1.2.5.0%28FINALLY cover system works%29</OutputName>
+    <OutputName>Phone Utils Installer V1.2.6.0</OutputName>
     <OutputType>Package</OutputType>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">

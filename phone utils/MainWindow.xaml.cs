@@ -51,7 +51,7 @@ namespace phone_utils
 
             connectionCheckTimer = new DispatcherTimer
             {
-                Interval = TimeSpan.FromSeconds(30)
+                Interval = TimeSpan.FromSeconds(10)
             };
             connectionCheckTimer.Tick += ConnectionCheckTimer_Tick;
             connectionCheckTimer.Start();
@@ -436,7 +436,6 @@ namespace phone_utils
             Debugger.show("Updating current song from Musicolet...");
 
             string output = await AdbHelper.RunAdbCaptureAsync($"-s {currentDevice} shell dumpsys media_session");
-            Debugger.show($"Media session output:\n{output}");
 
             bool foundActiveSong = false;
 
@@ -449,36 +448,46 @@ namespace phone_utils
                     if (!block.Contains("package=in.krosbits.musicolet") || !block.Contains("active=true"))
                         continue;
 
-                    var match = Regex.Match(block,
-                        @"metadata:\s+size=\d+,\s+description=(.+),\s+(.+),\s+(.+)$",
+                    // Extract metadata: title, artist, album
+                    var metaMatch = Regex.Match(block,
+                        @"metadata:\s+size=\d+,\s+description=(.+?),\s+(.+?),\s+(.+)",
                         RegexOptions.Singleline);
 
-                    if (!match.Success)
+                    if (!metaMatch.Success)
                         continue;
 
-                    string title = match.Groups[1].Value.Trim();
-                    string artist = match.Groups[2].Value.Trim();
-                    string album = match.Groups[3].Value.Trim();
+                    string title = metaMatch.Groups[1].Value.Trim();
+                    string artist = metaMatch.Groups[2].Value.Trim();
+                    string album = metaMatch.Groups[3].Value.Trim();
+
+                    // Extract playback state and position
+                    var stateMatch = Regex.Match(block, @"state=PlaybackState\s*\{[^}]*state=(\w+)\((\d+)\),\s*position=(\d+)", RegexOptions.Singleline);
+
+                    bool isPlaying = false;
+                    long position = 0;
+
+                    if (stateMatch.Success)
+                    {
+                        string stateText = stateMatch.Groups[1].Value.Trim().ToUpper(); // PLAYING, PAUSED, etc.
+                        isPlaying = stateText == "PLAYING";
+                        long.TryParse(stateMatch.Groups[3].Value.Trim(), out position);
+                    }
+
 
                     if (!string.IsNullOrEmpty(title) && !string.IsNullOrEmpty(artist))
                     {
                         DeviceStatusText.Text = $"Song: {title} by {artist}";
-                        Debugger.show($"Now playing: {title} by {artist} ({album})");
+                        Debugger.show($"Now playing: {title} by {artist} ({album}) at {position} ms — Playing: {isPlaying}");
 
-                        UpdateMediaControls(title, artist, album);
+                        UpdateMediaControls(title, artist, album, isPlaying);
                         foundActiveSong = true;
-                        break; // exit after first active song
+                        break;
                     }
                 }
             }
-
-            if (!foundActiveSong)
-            {
-                DeviceStatusText.Text = "No song currently playing in Musicolet.";
-                Debugger.show("No active song found");
-                ClearMediaControls(); // ensures SMTC is cleared
-            }
         }
+
+
 
 
         private async void DisplayAppActivity()
@@ -528,6 +537,7 @@ namespace phone_utils
         #endregion
 
         #region Media Controls
+        #region SMTC Initialization
         private async void InitializeMediaPlayer()
         {
             try
@@ -554,7 +564,9 @@ namespace phone_utils
                 Debugger.show($"MediaPlayer initialization failed: {ex.Message}");
             }
         }
+        #endregion
 
+        #region Media Control Actions
         private async void smtcControls_ButtonPressed(SystemMediaTransportControls sender, SystemMediaTransportControlsButtonPressedEventArgs args)
         {
             Debugger.show($"SMTC Button Pressed: {args.Button}");
@@ -581,8 +593,6 @@ namespace phone_utils
                 }
             });
         }
-
-        #region Media Control Actions
         private async void PlayTrack()
         {
             await AdbHelper.RunAdbAsync($"-s {currentDevice} shell input keyevent 85");
@@ -613,9 +623,8 @@ namespace phone_utils
 
         #endregion
 
-        #region Media Controls Helper Methods
-
-        private async Task SetSMTCImageAsync(string fileNameWithoutExtension, string artist)
+        #region coverartSMTC
+        private async Task<TimeSpan?> SetSMTCImageAsync(string fileNameWithoutExtension, string artist)
         {
             if (mediaPlayer == null || smtcDisplayUpdater == null)
             {
@@ -623,11 +632,11 @@ namespace phone_utils
                 if (mediaPlayer == null || smtcDisplayUpdater == null)
                 {
                     Debugger.show("Failed to initialize media player");
-                    return;
+                    return null;
                 }
             }
 
-            string folderPath = @"C:\Users\wille\Desktop\misc\images";
+            string folderPath = @"C:\Users\wille\Desktop\Audio";
             string[] audioExtensions = { ".mp3", ".flac", ".wav", ".m4a", ".ogg", ".opus", ".webp", ".png", ".jpg", ".jpeg" };
             string[] imageExtensions = { ".webp", ".png", ".jpg", ".jpeg" };
 
@@ -653,7 +662,7 @@ namespace phone_utils
                 {
                     Debugger.show("Step 1.1: No audio files found (partial match failed)");
                     await SetDefaultImage();
-                    return;
+                    return null;
                 }
 
                 Debugger.show($"Step 1.1: Found {matchingFiles.Count} file(s) matching partially");
@@ -677,6 +686,28 @@ namespace phone_utils
 
                 List<string> filesToProcess = artistMatches.Count > 0 ? artistMatches : matchingFiles;
 
+                // === STEP 3: EXTRACT DURATION FROM BEST MATCHED AUDIO FILE ===
+                string filePathForDuration = filesToProcess.FirstOrDefault(f => audioExtensions.Contains(Path.GetExtension(f).ToLower()));
+
+                TimeSpan? duration = null;
+                if (filePathForDuration != null)
+                {
+                    try
+                    {
+                        var tagFile = TagLib.File.Create(filePathForDuration);
+                        duration = tagFile.Properties.Duration;
+                        Debugger.show($"Duration of '{Path.GetFileName(filePathForDuration)}' is {duration}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debugger.show($"Failed to read audio file duration: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    Debugger.show("No suitable audio file found to extract duration.");
+                }
+
                 // Prioritize subfolder files
                 var sortedFiles = filesToProcess.OrderByDescending(f =>
                 {
@@ -686,7 +717,7 @@ namespace phone_utils
 
                 Debugger.show($"Step 2: Processing {sortedFiles.Count} file(s) (subfolder priority)");
 
-                // === STEP 3: TRY EACH FILE UNTIL COVER ART FOUND ===
+                // === STEP 4: TRY EACH FILE UNTIL COVER ART FOUND ===
                 foreach (var filePath in sortedFiles)
                 {
                     Debugger.show($"Step 3: Processing file: {Path.GetFileName(filePath)}");
@@ -698,7 +729,7 @@ namespace phone_utils
                         smtcDisplayUpdater.Thumbnail = RandomAccessStreamReference.CreateFromFile(imageFile);
                         smtcDisplayUpdater.Update();
                         Debugger.show("SMTC image updated successfully");
-                        return;
+                        return duration;
                     }
 
                     Debugger.show($"Step 3: No cover art found for {Path.GetFileName(filePath)}, trying next file...");
@@ -706,11 +737,14 @@ namespace phone_utils
 
                 Debugger.show("Step 3: All files exhausted, using default image");
                 await SetDefaultImage();
+
+                return duration;
             }
             catch (Exception ex)
             {
                 Debugger.show($"Critical error in SetSMTCImageAsync: {ex.Message}");
                 await SetDefaultImage();
+                return null;
             }
         }
 
@@ -826,16 +860,16 @@ namespace phone_utils
                 Debugger.show($"Failed to set default image: {ex.Message}");
             }
         }
+        #endregion
 
-
-
-
-
-
-
-        private void UpdateMediaControls(string title, string artist, string album)
+        #region SMTC Update & Clear
+        private async Task UpdateMediaControls(string title, string artist, string album, bool IsPlaying)
         {
-            SetSMTCImageAsync(title, artist);
+            smtcControls.PlaybackStatus = IsPlaying
+                ? MediaPlaybackStatus.Playing
+                : MediaPlaybackStatus.Paused;
+
+            TimeSpan? duration = await SetSMTCImageAsync(title, artist);
             if (mediaPlayer == null || smtcDisplayUpdater == null)
                 return;
 
@@ -847,8 +881,18 @@ namespace phone_utils
                 musicProperties.AlbumTitle = album;
 
                 smtcDisplayUpdater.Update();
-                smtcControls.PlaybackStatus = MediaPlaybackStatus.Playing;
 
+                // Update timeline properties if duration is available
+                if (duration.HasValue)
+                {
+                    var timelineProps = new SystemMediaTransportControlsTimelineProperties
+                    {
+                        StartTime = TimeSpan.Zero,
+                        EndTime = duration.Value,
+                        
+                    };
+                    smtcControls.UpdateTimelineProperties(timelineProps);
+                }
             }
             catch (Exception ex)
             {
