@@ -13,7 +13,14 @@
     <ApplicationIcon>logo.ico</ApplicationIcon>
   </PropertyGroup>
 
-  <ItemGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<Optimize>true</Optimize>
+		<DebugType>none</DebugType>
+		<DefineConstants>TRACE</DefineConstants>
+	</PropertyGroup>
+
+
+	<ItemGroup>
     <Compile Remove="outside exe%27s\**" />
     <EmbeddedResource Remove="outside exe%27s\**" />
     <None Remove="outside exe%27s\**" />

@@ -43,6 +43,12 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <Storyboard x:Key="SpinAnimation">
+            <DoubleAnimation Storyboard.TargetName="SettingsIcon"
+                     Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                     From="0" To="360" Duration="0:0:0.6"
+                     AccelerationRatio="0.2" DecelerationRatio="0.2"/>
+        </Storyboard>
     </Window.Resources>
 
 
@@ -91,15 +97,40 @@
                        Foreground="Gray"/>
 
             <!-- Battery Level -->
-            <TextBlock x:Name="BatteryText"
-                       HorizontalAlignment="Right"
-                       VerticalAlignment="Center"
-                       Margin="10,0,0,0"
-                       Text="Battery: N/A"
-                       TextAlignment="Right"
-                       FontSize="16"
-                       FontWeight="Bold"
-                       Foreground="Gray" Height="21" Width="670"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <!-- Battery Text -->
+                <TextBlock x:Name="BatteryText"
+               Text="Battery: N/A"
+               TextAlignment="Right"
+               FontSize="16"
+               FontWeight="Bold"
+               Foreground="Gray"
+               VerticalAlignment="Center"
+               Margin="10,0,0,0"
+               Height="21"
+               Width="670" />
+
+                <!-- Settings Button -->
+                <Button x:Name="BtnSettings"
+        Width="30"
+        Height="30"
+        Margin="10,0,0,0"
+        Style="{StaticResource ModernButtonStyle}"
+        Click="BtnSettings_Click">
+                    <TextBlock x:Name="SettingsIcon"
+               FontFamily="Segoe MDL2 Assets"
+               Text="&#xE713;"
+               FontSize="20"
+               HorizontalAlignment="Center"
+               VerticalAlignment="Center"
+               RenderTransformOrigin="0.5,0.5">
+                        <TextBlock.RenderTransform>
+                            <RotateTransform Angle="0"/>
+                        </TextBlock.RenderTransform>
+                    </TextBlock>
+                </Button>
+            </StackPanel>
+
 
             <!-- Refresh button -->
             <Button x:Name="BtnRefresh"

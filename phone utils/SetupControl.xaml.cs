@@ -27,8 +27,7 @@ namespace phone_utils
             InitializeComponent();
             _main = main;
 
-
-            Debugger.show("SetupControl initialized. Loading configuration from: " + configPath); // Trace initialization
+            Debugger.show("SetupControl initialized. Loading configuration from: " + configPath);
             _config = ConfigManager.Load(configPath);
             ApplyConfigToUI();
         }
@@ -36,7 +35,7 @@ namespace phone_utils
         #region UI Initialization
         private void ApplyConfigToUI()
         {
-            Debugger.show("Applying configuration to UI."); // Trace applying config
+            Debugger.show("Applying configuration to UI.");
             string resourcesDir = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 "Phone Utils",
@@ -47,18 +46,15 @@ namespace phone_utils
             _config.Paths.Adb = string.IsNullOrEmpty(_config.Paths.Adb) || _config.Paths.Adb.Contains("PhoneUtils")
                 ? Path.Combine(resourcesDir, "adb.exe")
                 : _config.Paths.Adb;
-            Debugger.show("ADB Path set to: " + _config.Paths.Adb); // Trace ADB path
+            Debugger.show("ADB Path set to: " + _config.Paths.Adb);
 
             _config.Paths.Scrcpy = string.IsNullOrEmpty(_config.Paths.Scrcpy) || _config.Paths.Scrcpy.Contains("PhoneUtils")
                 ? Path.Combine(resourcesDir, "scrcpy.exe")
                 : _config.Paths.Scrcpy;
-            Debugger.show("Scrcpy Path set to: " + _config.Paths.Scrcpy); // Trace Scrcpy path
+            Debugger.show("Scrcpy Path set to: " + _config.Paths.Scrcpy);
 
             TxtAdbPath.Text = _config.Paths.Adb;
             TxtScrcpyPath.Text = _config.Paths.Scrcpy;
-            TxtBackground.Text = _config.Paths.Background;
-
-            ApplyButtonColors(_config.ButtonStyle);
 
             DeviceSelector.ItemsSource = _config.SavedDevices;
             if (!string.IsNullOrEmpty(_config.SelectedDeviceUSB))
@@ -66,32 +62,19 @@ namespace phone_utils
                 DeviceSelector.SelectedValue = _config.SelectedDeviceUSB;
                 TxtPincode.Password = _config.SavedDevices
                     .FirstOrDefault(d => d.UsbSerial == _config.SelectedDeviceUSB)?.Pincode ?? string.Empty;
-                Debugger.show("Selected device set: " + _config.SelectedDeviceUSB); // Trace selected device
+                Debugger.show("Selected device set: " + _config.SelectedDeviceUSB);
             }
 
             ToggleDevMode(_config.SpecialOptions.DevMode);
         }
 
-        private void ApplyButtonColors(ButtonStyleConfig style)
-        {
-            Debugger.show("Applying button colors."); // Trace button color application
-            Application.Current.Resources["ButtonBackground"] = (SolidColorBrush)new BrushConverter().ConvertFromString(style.Background);
-            Application.Current.Resources["ButtonForeground"] = (SolidColorBrush)new BrushConverter().ConvertFromString(style.Foreground);
-            Application.Current.Resources["ButtonHover"] = (SolidColorBrush)new BrushConverter().ConvertFromString(style.Hover);
-
-            BtnPickBackground.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(style.Background));
-            BtnPickForeground.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(style.Foreground));
-            BtnPickHover.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(style.Hover));
-        }
-
         private void ToggleDevMode(bool enabled)
         {
-            Debugger.show("ToggleDevMode called. Enabled: " + enabled); // Trace devmode toggle
+            Debugger.show("ToggleDevMode called. Enabled: " + enabled);
             Visibility devVisibility = enabled ? Visibility.Visible : Visibility.Collapsed;
             AdbPathPanel.Visibility = devVisibility;
             ScrcpyPathPanel.Visibility = devVisibility;
             SaveButton.Visibility = devVisibility;
-            ChkDevmode.IsChecked = enabled;
         }
         #endregion
 
@@ -100,35 +83,27 @@ namespace phone_utils
         {
             var dlg = new OpenFileDialog { Filter = filter };
             var result = dlg.ShowDialog() == true ? dlg.FileName : string.Empty;
-            Debugger.show("BrowseFile selected: " + result); // Trace file selected
+            Debugger.show("BrowseFile selected: " + result);
             return result;
         }
 
         private void BrowseAdb(object sender, RoutedEventArgs e) => TxtAdbPath.Text = BrowseFile("ADB Executable|adb.exe");
         private void BrowseScrcpy(object sender, RoutedEventArgs e) => TxtScrcpyPath.Text = BrowseFile("Scrcpy Executable|scrcpy.exe");
-        private void BrowseBackground(object sender, RoutedEventArgs e)
-        {
-            TxtBackground.Text = BrowseFile("Supported Images|*.jpg;*.png|Jpeg file(*.jpg)|*.jpg|Png file(*.png)|*.png|All files|*.*");
-            Debugger.show("Background selected: " + TxtBackground.Text); // Trace background selection
-            UpdateConfigFromUI();
-            SaveConfig(false);
-        }
         #endregion
 
         #region Config Save / Reload
         private void SaveConfiguration(object sender, RoutedEventArgs e)
         {
-            Debugger.show("SaveConfiguration triggered."); // Trace save trigger
+            Debugger.show("SaveConfiguration triggered.");
             UpdateConfigFromUI();
             SaveConfig(true);
         }
 
         private void UpdateConfigFromUI()
         {
-            Debugger.show("Updating config from UI."); // Trace updating config from UI
+            Debugger.show("Updating config from UI.");
             _config.Paths.Adb = TxtAdbPath.Text;
             _config.Paths.Scrcpy = TxtScrcpyPath.Text;
-            _config.Paths.Background = TxtBackground.Text;
 
             if (DeviceSelector.SelectedItem is DeviceConfig selDev)
             {
@@ -136,7 +111,7 @@ namespace phone_utils
                 _config.SelectedDeviceName = selDev.Name;
                 _config.SelectedDeviceWiFi = selDev.TcpIp;
                 _config.SelectedDevicePincode = selDev.Pincode;
-                Debugger.show("Device selection updated: " + selDev.UsbSerial); // Trace selected device update
+                Debugger.show("Device selection updated: " + selDev.UsbSerial);
             }
         }
 
@@ -148,7 +123,7 @@ namespace phone_utils
                 if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
 
                 ConfigManager.Save(configPath, _config);
-                Debugger.show("Configuration saved to: " + configPath); // Trace config save
+                Debugger.show("Configuration saved to: " + configPath);
                 _main.ReloadConfiguration();
                 if (showmessage)
                     MessageBox.Show("Configuration saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -156,71 +131,39 @@ namespace phone_utils
             catch (Exception ex)
             {
                 MessageBox.Show($"Failed to save configuration: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                Debugger.show("SaveConfig exception: " + ex.Message); // Trace save exception
+                Debugger.show("SaveConfig exception: " + ex.Message);
             }
-        }
-
-        private void ChkDevmode_Checked(object sender, RoutedEventArgs e)
-        {
-            bool isChecked = ChkDevmode.IsChecked == true;
-            _config.SpecialOptions.DevMode = true;
-            var result = MessageBox.Show(
-                "Are you sure you want to enable devmode\n this has extra features, but they only work when specific apps are installed",
-                "",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question
-            );
-            Debugger.show("DevMode checked. User confirmation: " + result); // Trace devmode check and confirmation
-            if (result == MessageBoxResult.Yes)
-            {
-                ToggleDevMode(isChecked);
-                SaveConfig(false);
-            }
-            else
-            {
-                ChkDevmode.IsChecked = false;
-            }
-        }
-
-        private void ChkDevmode_Unchecked(object sender, RoutedEventArgs e)
-        {
-            bool isChecked = ChkDevmode.IsChecked == true;
-            _config.SpecialOptions.DevMode = false;
-            Debugger.show("DevMode unchecked."); // Trace devmode uncheck
-            ToggleDevMode(isChecked);
-            SaveConfig(false);
         }
         #endregion
 
         #region Device Management
         private async Task<string> GetDeviceIpAsync(string serial)
         {
-            Debugger.show("Getting IP for device: " + serial); // Trace IP fetch
+            Debugger.show("Getting IP for device: " + serial);
             string output = await AdbHelper.RunAdbCaptureAsync($"-s {serial} shell ip addr show wlan0");
 
             var match = Regex.Match(output, @"inet (\d+\.\d+\.\d+\.\d+)/");
-            Debugger.show("IP result: " + (match.Success ? match.Groups[1].Value : "null")); // Trace IP parsing
+            Debugger.show("IP result: " + (match.Success ? match.Groups[1].Value : "null"));
             return match.Success ? match.Groups[1].Value : null;
         }
 
         private async Task<string> GetFirstUsbSerialAsync()
         {
             string output = await AdbHelper.RunAdbCaptureAsync("devices");
-            Debugger.show("ADB devices output:\n" + output); // Trace adb devices
+            Debugger.show("ADB devices output:\n" + output);
 
             foreach (var line in output.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
             {
                 if (line.EndsWith("\tdevice"))
                 {
-                    Debugger.show("First USB device found: " + line.Split('\t')[0]); // Trace first USB serial
+                    Debugger.show("First USB device found: " + line.Split('\t')[0]);
                     return line.Split('\t')[0];
                 }
             }
 
-            Debugger.show("No USB device found."); // Trace no device
+            Debugger.show("No USB device found.");
             return null;
         }
-
 
         private async void SaveCurrentDevice(object sender, RoutedEventArgs e)
         {
@@ -228,7 +171,7 @@ namespace phone_utils
             if (string.IsNullOrWhiteSpace(adbPath) || !File.Exists(adbPath))
             {
                 MessageBox.Show("Please select a valid adb.exe path first.", "ADB Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
-                Debugger.show("Invalid ADB path: " + adbPath); // Trace invalid adb path
+                Debugger.show("Invalid ADB path: " + adbPath);
                 return;
             }
 
@@ -241,9 +184,7 @@ namespace phone_utils
 
             // Try to get IP (Wi-Fi)
             string ip = await GetDeviceIpAsync(serial);
-
             string tcpIpWithPort;
-
 
             if (string.IsNullOrEmpty(ip))
             {
@@ -257,17 +198,16 @@ namespace phone_utils
 
                 if (result != MessageBoxResult.Yes)
                 {
-                    // Abort saving if user does not confirm
                     return;
                 }
 
                 tcpIpWithPort = "None";
-                Debugger.show($"Device IP: {ip}, TCP: {tcpIpWithPort}"); // Trace IP or USB-only
+                Debugger.show($"Device IP: {ip}, TCP: {tcpIpWithPort}");
             }
             else
             {
                 tcpIpWithPort = $"{ip}:5555";
-                Debugger.show($"Device IP: {ip}, TCP: {tcpIpWithPort}"); // Trace IP or USB-only
+                Debugger.show($"Device IP: {ip}, TCP: {tcpIpWithPort}");
             }
 
             string name = TxtDeviceName.Text.Trim();
@@ -277,7 +217,6 @@ namespace phone_utils
                 return;
             }
 
-
             var newDevice = new DeviceConfig
             {
                 Name = name,
@@ -286,14 +225,14 @@ namespace phone_utils
                 LastConnected = DateTime.Now,
                 Pincode = TxtPincode.Password
             };
-            Debugger.show("New device created: " + newDevice.UsbSerial + ", Name: " + newDevice.Name); // Trace new device
+            Debugger.show("New device created: " + newDevice.UsbSerial + ", Name: " + newDevice.Name);
 
             // Remove existing device with same serial
             var existing = _config.SavedDevices.FirstOrDefault(d => d.UsbSerial == serial);
             if (existing != null)
             {
                 _config.SavedDevices.Remove(existing);
-                Debugger.show("Removed existing device with same serial: " + serial); // Trace removal
+                Debugger.show("Removed existing device with same serial: " + serial);
             }
 
             _config.SavedDevices.Add(newDevice);
@@ -312,16 +251,13 @@ namespace phone_utils
                 ? "Device saved successfully as USB only."
                 : $"Device saved successfully. Detected IP: {tcpIpWithPort}";
 
-            Debugger.show(msg); // Trace success message
+            Debugger.show(msg);
             MessageBox.Show(msg, "Success", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-
-
-
         private void UpdateSelectedDevice(DeviceConfig device)
         {
-            Debugger.show("Updating selected device: " + device.UsbSerial); // Trace update selected device
+            Debugger.show("Updating selected device: " + device.UsbSerial);
             _config.SelectedDeviceUSB = device.UsbSerial;
             _config.SelectedDeviceName = device.Name;
             _config.SelectedDeviceWiFi = device.TcpIp;
@@ -332,7 +268,7 @@ namespace phone_utils
         private void DeleteSelectedDevice(object sender, RoutedEventArgs e)
         {
             if (DeviceSelector.SelectedItem is not DeviceConfig selectedDevice)
-                return; // exit silently if nothing is selected
+                return;
 
             var result = MessageBox.Show(
                 $"Are you sure you want to delete the device '{selectedDevice.Name}'?",
@@ -344,7 +280,7 @@ namespace phone_utils
             if (result != MessageBoxResult.Yes) return;
 
             _config.SavedDevices.Remove(selectedDevice);
-            Debugger.show("Deleted device: " + selectedDevice.UsbSerial); // Trace deletion
+            Debugger.show("Deleted device: " + selectedDevice.UsbSerial);
 
             if (_config.SelectedDeviceUSB == selectedDevice.UsbSerial)
             {
@@ -353,7 +289,7 @@ namespace phone_utils
                 _config.SelectedDeviceName = string.Empty;
                 _config.SelectedDeviceWiFi = string.Empty;
                 _config.SelectedDevicePincode = string.Empty;
-                Debugger.show("Cleared current selected device as it was deleted."); // Trace clear selection
+                Debugger.show("Cleared current selected device as it was deleted.");
             }
 
             DeviceSelector.SelectionChanged -= DeviceSelector_SelectionChanged;
@@ -364,54 +300,16 @@ namespace phone_utils
             SaveConfig(false);
         }
 
-
         private void DeviceSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (DeviceSelector.SelectedItem is DeviceConfig selectedDevice)
             {
-                Debugger.show("DeviceSelector changed to: " + selectedDevice.UsbSerial); // Trace selection change
+                Debugger.show("DeviceSelector changed to: " + selectedDevice.UsbSerial);
                 UpdateSelectedDevice(selectedDevice);
                 UpdateConfigFromUI();
                 SaveConfig(false);
             }
         }
-        #endregion
-
-        #region Color Pickers
-        private void PickColor(SolidColorBrush currentBrush, Action<Color> apply)
-        {
-            Debugger.show("Opening color picker."); // Trace color picker open
-            var picker = new ColorPickerWindow(currentBrush.Color);
-            if (picker.ShowDialog() == true)
-            {
-                apply(picker.SelectedColor);
-                SaveConfig(false);
-            }
-        }
-
-        private void BtnPickBackground_Click(object sender, RoutedEventArgs e) =>
-            PickColor(BtnPickBackground.Background as SolidColorBrush, c =>
-            {
-                Application.Current.Resources["ButtonBackground"] = new SolidColorBrush(c);
-                BtnPickBackground.Background = new SolidColorBrush(c);
-                _config.ButtonStyle.Background = c.ToString();
-            });
-
-        private void BtnPickForeground_Click(object sender, RoutedEventArgs e) =>
-            PickColor(BtnPickForeground.Background as SolidColorBrush, c =>
-            {
-                Application.Current.Resources["ButtonForeground"] = new SolidColorBrush(c);
-                BtnPickForeground.Background = new SolidColorBrush(c);
-                _config.ButtonStyle.Foreground = c.ToString();
-            });
-
-        private void BtnPickHover_Click(object sender, RoutedEventArgs e) =>
-            PickColor(BtnPickHover.Background as SolidColorBrush, c =>
-            {
-                Application.Current.Resources["ButtonHover"] = new SolidColorBrush(c);
-                BtnPickHover.Background = new SolidColorBrush(c);
-                _config.ButtonStyle.Hover = c.ToString();
-            });
         #endregion
 
         #region Config Classes
@@ -435,7 +333,8 @@ namespace phone_utils
 
         public class SpecialOptionsConfig
         {
-            public bool ShowDebugMessages { get; set; } = false;
+            public bool MusicPresence { get; set; } = false;
+            public bool DebugMode { get; set; } = false;
             public bool DevMode { get; set; } = false;
         }
 
@@ -455,10 +354,10 @@ namespace phone_utils
             public string SelectedDevicePincode { get; set; } = string.Empty;
         }
 
-        public class PathsConfig 
-        { 
+        public class PathsConfig
+        {
             public string Adb { get; set; } = string.Empty;
-            public string Scrcpy { get; set; } = string.Empty; 
+            public string Scrcpy { get; set; } = string.Empty;
             public string Background { get; set; } = string.Empty;
         }
         public class FileSyncConfig { public string LocalDir { get; set; } = ""; public string RemoteDir { get; set; } = ""; public bool recursion { get; set; } = true; }
@@ -499,13 +398,13 @@ namespace phone_utils
 
             public static void Save(string path, AppConfig config)
             {
-                try 
-                { 
+                try
+                {
                     File.WriteAllText(path, JsonConvert.SerializeObject(config, Formatting.Indented));
                     Debugger.show("ConfigManager.Save completed for: " + path);
                 }
-                catch (Exception ex) 
-                { 
+                catch (Exception ex)
+                {
                     MessageBox.Show($"Failed to save configuration: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     Debugger.show("ConfigManager.Save exception: " + ex.Message);
                 }

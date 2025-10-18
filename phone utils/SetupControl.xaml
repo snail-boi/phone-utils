@@ -39,31 +39,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        <Style x:Key="ColorButtonStyle" TargetType="Button">
-            <Setter Property="Foreground" Value="Black"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Padding" Value="6,4"/>
-            <Setter Property="Margin" Value="4"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border"
-                        Background="{TemplateBinding Background}"
-                        BorderBrush="Gray"
-                        BorderThickness="1"
-                        CornerRadius="6">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                      VerticalAlignment="Center"/>
-                        </Border>
-                        <!-- No triggers for hover or pressed -->
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
 
         <!-- TextBox Style -->
         <Style TargetType="TextBox">
@@ -168,13 +143,13 @@
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                         <TextBlock Text="Saved Devices:" Width="120" VerticalAlignment="Center"/>
                         <ComboBox x:Name="DeviceSelector"
-          Width="310"
-          DisplayMemberPath="Name"
-          SelectedValuePath="UsbSerial"
-          SelectionChanged="DeviceSelector_SelectionChanged"
-          Foreground="White"
-          BorderBrush="#444"
-          IsEditable="False">
+                                  Width="310"
+                                  DisplayMemberPath="Name"
+                                  SelectedValuePath="UsbSerial"
+                                  SelectionChanged="DeviceSelector_SelectionChanged"
+                                  Foreground="White"
+                                  BorderBrush="#444"
+                                  IsEditable="False">
                             <ComboBox.Resources>
                                 <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#5539cc"/>
                                 <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="White"/>
@@ -183,29 +158,29 @@
                                 <ControlTemplate TargetType="ComboBox">
                                     <Grid>
                                         <ToggleButton Name="ToggleButton"
-                          Background="#222"
-                          BorderBrush="{TemplateBinding BorderBrush}"
-                          BorderThickness="{TemplateBinding BorderThickness}"
-                          Focusable="False"
-                          IsChecked="{Binding Path=IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
-                          ClickMode="Press"
-                          HorizontalContentAlignment="Left"
-                          VerticalContentAlignment="Center">
+                                                      Background="#222"
+                                                      BorderBrush="{TemplateBinding BorderBrush}"
+                                                      BorderThickness="{TemplateBinding BorderThickness}"
+                                                      Focusable="False"
+                                                      IsChecked="{Binding Path=IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                                      ClickMode="Press"
+                                                      HorizontalContentAlignment="Left"
+                                                      VerticalContentAlignment="Center">
                                             <ContentPresenter Name="ContentSite"
-                                  Content="{TemplateBinding SelectionBoxItem}"
-                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
-                                  Margin="4,2,0,2"
-                                  HorizontalAlignment="Left"
-                                  VerticalAlignment="Center"
-                                  RecognizesAccessKey="True"/>
+                                                              Content="{TemplateBinding SelectionBoxItem}"
+                                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                              Margin="4,2,0,2"
+                                                              HorizontalAlignment="Left"
+                                                              VerticalAlignment="Center"
+                                                              RecognizesAccessKey="True"/>
                                         </ToggleButton>
 
                                         <Popup Name="Popup"
-                   Placement="Bottom"
-                   IsOpen="{TemplateBinding IsDropDownOpen}"
-                   AllowsTransparency="True"
-                   Focusable="False"
-                   PopupAnimation="Slide">
+                                               Placement="Bottom"
+                                               IsOpen="{TemplateBinding IsDropDownOpen}"
+                                               AllowsTransparency="True"
+                                               Focusable="False"
+                                               PopupAnimation="Slide">
                                             <Border Background="#222" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1">
                                                 <ScrollViewer Margin="4,6,4,6" SnapsToDevicePixels="True">
                                                     <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained"/>
@@ -215,10 +190,7 @@
                                     </Grid>
                                 </ControlTemplate>
                             </ComboBox.Template>
-
                         </ComboBox>
-
-
                     </StackPanel>
 
                     <!-- Device Name TextBox -->
@@ -248,7 +220,7 @@
                 </StackPanel>
 
                 <!-- ADB Path -->
-                <StackPanel x:Name="AdbPathPanel" Orientation="Horizontal" Margin="0,2,0,2" Visibility="Collapsed" >
+                <StackPanel x:Name="AdbPathPanel" Orientation="Horizontal" Margin="0,2,0,2" Visibility="Collapsed">
                     <TextBlock Text="ADB Path:" Width="120" VerticalAlignment="Center"/>
                     <TextBox x:Name="TxtAdbPath" Width="280" Margin="0,0,5,0"/>
                     <Button Content="Browse" Click="BrowseAdb" Style="{StaticResource ModernButtonStyle}"/>
@@ -261,36 +233,6 @@
                     <Button Content="Browse" Click="BrowseScrcpy" Style="{StaticResource ModernButtonStyle}"/>
                 </StackPanel>
 
-                <!-- Scrcpy Path -->
-                <StackPanel x:Name="Background" Orientation="Horizontal" Margin="0,2,0,2">
-                    <TextBlock Text="Background Path:" Width="120" VerticalAlignment="Center"/>
-                    <TextBox x:Name="TxtBackground" Width="280" Margin="0,0,5,0"/>
-                    <Button Content="Browse" Click="BrowseBackground" Style="{StaticResource ModernButtonStyle}"/>
-                </StackPanel>
-
-                <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
-                    <TextBlock Text="Background:" Width="120" VerticalAlignment="Center"/>
-                    <Button x:Name="BtnPickBackground" Width="150" Content="Pick Color" 
-        Click="BtnPickBackground_Click" Style="{StaticResource ColorButtonStyle}"/>
-                </StackPanel>
-
-                <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
-                    <TextBlock Text="Foreground:" Width="120" VerticalAlignment="Center"/>
-                    <Button x:Name="BtnPickForeground" Width="150" Content="Pick Color" 
-        Click="BtnPickForeground_Click" Style="{StaticResource ColorButtonStyle}"/>
-                </StackPanel>
-
-                <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
-                    <TextBlock Text="Hover:" Width="120" VerticalAlignment="Center"/>
-                    <Button x:Name="BtnPickHover" Width="150" Content="Pick Color" 
-        Click="BtnPickHover_Click" Style="{StaticResource ColorButtonStyle}"/>
-                </StackPanel>
-
-                <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
-                    <CheckBox x:Name="ChkDevmode" Content="devmode" Margin="2" Foreground="white" 
-                              Checked="ChkDevmode_Checked" Unchecked="ChkDevmode_Unchecked"/>
-                </StackPanel>
-
                 <!-- Save Button -->
                 <Button x:Name="SaveButton" Content="Save"
                         Width="109"
@@ -301,9 +243,8 @@
                         Margin="0,8,0,0"
                         Visibility="Collapsed"/>
 
-
             </StackPanel>
-            
+
         </Border>
     </Grid>
 </UserControl>

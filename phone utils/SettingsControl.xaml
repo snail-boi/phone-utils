@@ -1,0 +1,214 @@
+﻿<UserControl x:Class="phone_utils.SettingsControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:phone_utils"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800"
+             Background="#661E1E1E">
+
+    <UserControl.Resources>
+        <!-- Modern Button Style -->
+        <Style x:Key="ModernButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource ButtonBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ButtonForeground}" />
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ButtonHover}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{DynamicResource ButtonHover}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#d3d3d3"/>
+                                <Setter Property="Foreground" Value="#777"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ColorButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="Gray"
+                                BorderThickness="1"
+                                CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <!-- No triggers for hover or pressed -->
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Label/TextBlock Style -->
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style TargetType="Label">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <!-- TextBox Style -->
+        <Style TargetType="TextBox">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#222"/>
+            <Setter Property="BorderBrush" Value="#444"/>
+            <Setter Property="CaretBrush" Value="White"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid VerticalAlignment="Top" HorizontalAlignment="Center">
+        <Border Background="#2a2a2a" 
+                CornerRadius="8" 
+                Padding="12" 
+                BorderBrush="Gray" 
+                BorderThickness="1"
+                VerticalAlignment="Top"
+                HorizontalAlignment="Center">
+
+            <StackPanel>
+
+                <!-- Button Color Settings -->
+                <StackPanel Orientation="Vertical" Margin="10">
+                    <TextBlock Text="Button Color Settings" 
+                               FontSize="16" 
+                               FontWeight="Bold" 
+                               Margin="0,0,0,10"/>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
+                        <TextBlock Text="Background:" Width="120" VerticalAlignment="Center"/>
+                        <Button x:Name="BtnPickBackground" 
+                                Width="150" 
+                                Content="Pick Color" 
+                                Click="BtnPickBackground_Click" 
+                                Style="{StaticResource ColorButtonStyle}"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
+                        <TextBlock Text="Foreground:" Width="120" VerticalAlignment="Center"/>
+                        <Button x:Name="BtnPickForeground" 
+                                Width="150" 
+                                Content="Pick Color" 
+                                Click="BtnPickForeground_Click" 
+                                Style="{StaticResource ColorButtonStyle}"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
+                        <TextBlock Text="Hover:" Width="120" VerticalAlignment="Center"/>
+                        <Button x:Name="BtnPickHover" 
+                                Width="150" 
+                                Content="Pick Color" 
+                                Click="BtnPickHover_Click" 
+                                Style="{StaticResource ColorButtonStyle}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Separator -->
+                <Separator Margin="10,-10,10,-10" Background="#444"/>
+
+                <!-- Background Image Settings -->
+                <StackPanel Orientation="Vertical" Margin="10">
+                    <TextBlock Text="Background Image" 
+                               FontSize="16" 
+                               FontWeight="Bold" 
+                               Margin="0,0,0,10"/>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
+                        <TextBlock Text="Background Path:" Width="120" VerticalAlignment="Center"/>
+                        <TextBox x:Name="TxtBackground" 
+                                 Width="280" 
+                                 Margin="0,0,5,0"/>
+                        <Button Content="Browse" 
+                                Click="BrowseBackground" 
+                                Style="{StaticResource ModernButtonStyle}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Separator -->
+                <Separator Margin="10,-10,10,-10" Background="#444"/>
+
+                <!-- Developer Mode Settings -->
+                <StackPanel Orientation="Vertical" Margin="10">
+                    <TextBlock Text="Extra Options" 
+                               FontSize="16" 
+                               FontWeight="Bold" 
+                               Margin="0,0,0,10"/>
+
+                    <CheckBox x:Name="ChkMusicPresence" 
+                              Content="Enable Music Presence" 
+                              Margin="2" 
+                              Foreground="White" 
+                              Checked="ChkMusicPresence_Checked" 
+                              Unchecked="ChkMusicPresence_Unchecked"/>
+                    
+                    <TextBlock Text="This allows the program to collect data about what music is playing."
+                               TextWrapping="Wrap"
+                               Foreground="#AAA"
+                               FontSize="11"
+                               Margin="20,5,0,0"/>
+                    
+                    <CheckBox x:Name="ChkDebugMode" 
+                              Content="Enable Debug Mode" 
+                              Margin="2" 
+                              Foreground="White" 
+                              Checked="ChkDebugMode_Checked" 
+                              Unchecked="ChkDebugMode_Unchecked"/>
+                    <TextBlock Text="this starts logging everything."
+                               TextWrapping="Wrap"
+                               Foreground="#AAA"
+                               FontSize="11"
+                               Margin="20,5,0,0"/>
+
+                    <CheckBox x:Name="ChkDevmode" 
+                              Content="Enable Developer Mode" 
+                              Margin="2" 
+                              Foreground="White" 
+                              Checked="ChkDevmode_Checked" 
+                              Unchecked="ChkDevmode_Unchecked"/>
+
+                    <TextBlock Text="Enables extra features that require specific apps to be installed or configured."
+                               TextWrapping="Wrap"
+                               Foreground="#AAA"
+                               FontSize="11"
+                               Margin="20,5,0,0"/>
+                </StackPanel>
+
+            </StackPanel>
+
+        </Border>
+    </Grid>
+</UserControl>

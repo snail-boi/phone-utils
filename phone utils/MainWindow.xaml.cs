@@ -17,6 +17,7 @@ using CoverArt = TagLib;
 using static phone_utils.SetupControl;
 using Windows.Storage.Streams;
 using Windows.Storage;
+using System.Windows.Media.Animation;
 
 namespace phone_utils
 {
@@ -32,7 +33,10 @@ namespace phone_utils
         private HashSet<int> shownBatteryWarnings = new HashSet<int>();
         private bool wasCharging = false;
         public bool devmode;
+        public bool MusicPresence;
         public static bool debugmode;
+        private string lastSMTCTitle = null;
+
 
         private Windows.Media.Playback.MediaPlayer mediaPlayer;
         private Windows.Media.SystemMediaTransportControls smtcControls;
@@ -88,7 +92,8 @@ namespace phone_utils
 
             wifiDevice = config.SelectedDeviceWiFi;
             devmode = config.SpecialOptions != null && config.SpecialOptions.DevMode;
-            debugmode = config.SpecialOptions != null && config.SpecialOptions.ShowDebugMessages;
+            debugmode = config.SpecialOptions != null && config.SpecialOptions.DebugMode;
+            MusicPresence = config.SpecialOptions != null && config.SpecialOptions.MusicPresence;
 
             Debugger.show($"Selected Wi-Fi device: {wifiDevice}");
             Debugger.show($"Dev mode: {devmode}, Debug mode: {debugmode}");
@@ -413,7 +418,7 @@ namespace phone_utils
                     return;
                 }
 
-                if (config.SpecialOptions != null && config.SpecialOptions.DevMode)
+                if (config.SpecialOptions != null && config.SpecialOptions.MusicPresence)
                 {
                     // DevMode: detect currently playing song in Musicolet
                     await UpdateCurrentSongAsync();
@@ -637,7 +642,7 @@ namespace phone_utils
             }
 
             string folderPath = @"C:\Users\wille\Desktop\Audio";
-            string[] audioExtensions = { ".mp3", ".flac", ".wav", ".m4a", ".ogg", ".opus", ".webp", ".png", ".jpg", ".jpeg" };
+            string[] audioExtensions = { ".mp3", ".flac", ".wav", ".m4a", ".ogg", ".opus" };
             string[] imageExtensions = { ".webp", ".png", ".jpg", ".jpeg" };
 
             try
@@ -758,6 +763,7 @@ namespace phone_utils
             // === FILES IN SUBFOLDERS ===
             if (isInSubfolder)
             {
+
                 Debugger.show($"Step 2.2: File is in subfolder: {Path.GetFileName(fileDirectory)}");
 
                 // Try cover.jpg and cover.png first
@@ -774,8 +780,12 @@ namespace phone_utils
                     Debugger.show("Step 2.2: Found cover.png in subfolder");
                     return await StorageFile.GetFileFromPathAsync(coverPng);
                 }
+                else
+                {
 
-                Debugger.show("Step 2.2: No cover.jpg or cover.png found, trying TagLib");
+                }
+
+                    Debugger.show("Step 2.2: No cover.jpg or cover.png found, trying TagLib");
 
                 // Fall back to TagLib for subfolder files
                 var tagLibImage = await TryExtractCoverFromTagLib(filePath);
@@ -791,7 +801,7 @@ namespace phone_utils
 
                 foreach (var imgExt in imageExtensions)
                 {
-                    string imagePath = Path.Combine(fileDirectory, fileName + imgExt);
+                    string imagePath = Path.Combine(fileDirectory + "\\images", fileName + imgExt);
                     if (File.Exists(imagePath))
                     {
                         Debugger.show($"Step 2.1: Cover art found: {Path.GetFileName(imagePath)}");
@@ -865,6 +875,14 @@ namespace phone_utils
         #region SMTC Update & Clear
         private async Task UpdateMediaControls(string title, string artist, string album, bool IsPlaying)
         {
+            // Check if the title is the same as last time
+            if (string.Equals(lastSMTCTitle, title, StringComparison.OrdinalIgnoreCase))
+            {
+                Debugger.show($"SMTC title '{title}' is same as last. Skipping update.");
+                return;
+            }
+
+            lastSMTCTitle = title; // Update last known title
             smtcControls.PlaybackStatus = IsPlaying
                 ? MediaPlaybackStatus.Playing
                 : MediaPlaybackStatus.Paused;
@@ -948,7 +966,22 @@ namespace phone_utils
                 Intent.Content = "App Manager";
             }
         }
+        private void BtnSettings_Click(object sender, RoutedEventArgs e)
+        {
+            // Trigger the spin animation
+            var animation = (Storyboard)FindResource("SpinAnimation");
+            animation.Begin();
 
+            if (ContentHost.Content is SettingsControl)
+            {
+                ContentHost.Content = null;
+                ShowNotificationsAsDefault();
+            }
+            else
+            {
+                ContentHost.Content = new SettingsControl(this);
+            }
+        }
         private void BtnScrcpyOptions_Click(object sender, RoutedEventArgs e)
         {
             if (ContentHost.Content is ScrcpyControl)
@@ -1042,7 +1075,7 @@ namespace phone_utils
             }
             catch (Exception ex)
             {
-                if(config.SpecialOptions != null && config.SpecialOptions.ShowDebugMessages)
+                if(config.SpecialOptions != null && config.SpecialOptions.DebugMode)
                     MessageBox.Show($"Failed to close ADB processes: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
