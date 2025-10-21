@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:phone_utils"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800"
+             d:DesignHeight="450" d:DesignWidth="600"
              Background="#661E1E1E">
 
     <UserControl.Resources>
@@ -14,9 +14,9 @@
             <Setter Property="Background" Value="{DynamicResource ButtonBackground}" />
             <Setter Property="Foreground" Value="{DynamicResource ButtonForeground}" />
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Padding" Value="6,4"/>
-            <Setter Property="Margin" Value="4"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="Margin" Value="2"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
@@ -48,9 +48,9 @@
         <Style x:Key="ColorButtonStyle" TargetType="Button">
             <Setter Property="Foreground" Value="Black"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Padding" Value="6,4"/>
-            <Setter Property="Margin" Value="4"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="Margin" Value="2"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
@@ -64,7 +64,6 @@
                             <ContentPresenter HorizontalAlignment="Center"
                                               VerticalAlignment="Center"/>
                         </Border>
-                        <!-- No triggers for hover or pressed -->
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
@@ -88,13 +87,22 @@
             <Setter Property="Background" Value="#222"/>
             <Setter Property="BorderBrush" Value="#444"/>
             <Setter Property="CaretBrush" Value="White"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+
+        <!-- ComboBox Style -->
+        <Style TargetType="ComboBox">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#222"/>
+            <Setter Property="BorderBrush" Value="#444"/>
+            <Setter Property="FontSize" Value="12"/>
         </Style>
     </UserControl.Resources>
 
     <Grid VerticalAlignment="Top" HorizontalAlignment="Center">
         <Border Background="#2a2a2a" 
                 CornerRadius="8" 
-                Padding="12" 
+                Padding="8" 
                 BorderBrush="Gray" 
                 BorderThickness="1"
                 VerticalAlignment="Top"
@@ -103,54 +111,73 @@
             <StackPanel>
 
                 <!-- Button Color Settings -->
-                <StackPanel Orientation="Vertical" Margin="10">
+                <StackPanel Orientation="Vertical" Margin="8">
                     <TextBlock Text="Button Color Settings" 
-                               FontSize="16" 
+                               FontSize="14" 
                                FontWeight="Bold" 
-                               Margin="0,0,0,10"/>
+                               Margin="0,0,0,6"/>
 
                     <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
-                        <TextBlock Text="Background:" Width="120" VerticalAlignment="Center"/>
+                        <TextBlock Text="Background:" Width="100" VerticalAlignment="Center"/>
                         <Button x:Name="BtnPickBackground" 
-                                Width="150" 
+                                Width="130" 
                                 Content="Pick Color" 
                                 Click="BtnPickBackground_Click" 
                                 Style="{StaticResource ColorButtonStyle}"/>
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
-                        <TextBlock Text="Foreground:" Width="120" VerticalAlignment="Center"/>
+                        <TextBlock Text="Foreground:" Width="100" VerticalAlignment="Center"/>
                         <Button x:Name="BtnPickForeground" 
-                                Width="150" 
+                                Width="130" 
                                 Content="Pick Color" 
                                 Click="BtnPickForeground_Click" 
                                 Style="{StaticResource ColorButtonStyle}"/>
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
-                        <TextBlock Text="Hover:" Width="120" VerticalAlignment="Center"/>
+                        <TextBlock Text="Hover:" Width="100" VerticalAlignment="Center"/>
                         <Button x:Name="BtnPickHover" 
-                                Width="150" 
+                                Width="130" 
                                 Content="Pick Color" 
                                 Click="BtnPickHover_Click" 
                                 Style="{StaticResource ColorButtonStyle}"/>
                     </StackPanel>
+
+                    <!-- Theme Selection and Management -->
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,2">
+                        <TextBlock Text="Theme:" Width="100" VerticalAlignment="Center"/>
+                        <ComboBox x:Name="CmbThemes" 
+                                  Width="130" 
+                                  Margin="0,0,5,0"
+                                  SelectionChanged="CmbThemes_SelectionChanged"/>
+                        <Button x:Name="BtnSaveTheme" 
+                                Content="Save" 
+                                Click="BtnSaveTheme_Click" 
+                                Style="{StaticResource ModernButtonStyle}"
+                                Width="50"/>
+                        <Button x:Name="BtnDeleteTheme" 
+                                Content="Delete" 
+                                Click="BtnDeleteTheme_Click" 
+                                Style="{StaticResource ModernButtonStyle}"
+                                Width="50"/>
+                    </StackPanel>
                 </StackPanel>
 
                 <!-- Separator -->
-                <Separator Margin="10,-10,10,-10" Background="#444"/>
+                <Separator Margin="8,-6,8,-6" Background="#444"/>
 
                 <!-- Background Image Settings -->
-                <StackPanel Orientation="Vertical" Margin="10">
+                <StackPanel Orientation="Vertical" Margin="8">
                     <TextBlock Text="Background Image" 
-                               FontSize="16" 
+                               FontSize="14" 
                                FontWeight="Bold" 
-                               Margin="0,0,0,10"/>
+                               Margin="0,0,0,6"/>
 
                     <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
-                        <TextBlock Text="Background Path:" Width="120" VerticalAlignment="Center"/>
+                        <TextBlock Text="Background Path:" Width="100" VerticalAlignment="Center"/>
                         <TextBox x:Name="TxtBackground" 
-                                 Width="280" 
+                                 Width="220" 
                                  Margin="0,0,5,0"/>
                         <Button Content="Browse" 
                                 Click="BrowseBackground" 
@@ -159,52 +186,65 @@
                 </StackPanel>
 
                 <!-- Separator -->
-                <Separator Margin="10,-10,10,-10" Background="#444"/>
+                <Separator Margin="8,-6,8,-6" Background="#444"/>
 
                 <!-- Developer Mode Settings -->
-                <StackPanel Orientation="Vertical" Margin="10">
+                <StackPanel Orientation="Vertical" Margin="8">
                     <TextBlock Text="Extra Options" 
-                               FontSize="16" 
+                               FontSize="12" 
                                FontWeight="Bold" 
-                               Margin="0,0,0,10"/>
+                               Margin="0,0,0,4"/>
 
-                    <CheckBox x:Name="ChkMusicPresence" 
-                              Content="Enable Music Presence" 
-                              Margin="2" 
-                              Foreground="White" 
-                              Checked="ChkMusicPresence_Checked" 
-                              Unchecked="ChkMusicPresence_Unchecked"/>
-                    
-                    <TextBlock Text="This allows the program to collect data about what music is playing."
-                               TextWrapping="Wrap"
-                               Foreground="#AAA"
-                               FontSize="11"
-                               Margin="20,5,0,0"/>
-                    
-                    <CheckBox x:Name="ChkDebugMode" 
-                              Content="Enable Debug Mode" 
-                              Margin="2" 
-                              Foreground="White" 
-                              Checked="ChkDebugMode_Checked" 
-                              Unchecked="ChkDebugMode_Unchecked"/>
-                    <TextBlock Text="this starts logging everything."
-                               TextWrapping="Wrap"
-                               Foreground="#AAA"
-                               FontSize="11"
-                               Margin="20,5,0,0"/>
+                    <!-- Enable Music Presence -->
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,2">
+                        <CheckBox x:Name="ChkMusicPresence" 
+                                  Content="Enable Music Presence" 
+                                  Margin="0" 
+                                  Foreground="White" 
+                                  Checked="ChkMusicPresence_Checked" 
+                                  Unchecked="ChkMusicPresence_Unchecked"
+                                  VerticalAlignment="Center"/>
+                        <TextBlock Text="Allows data collection on music." 
+                                   TextWrapping="Wrap"
+                                   Foreground="#AAA"
+                                   FontSize="9"
+                                   Margin="10,0,0,0"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
 
-                    <CheckBox x:Name="ChkDevmode" 
-                              Content="Enable Developer Mode" 
-                              Margin="2" 
-                              Foreground="White" 
-                              Checked="ChkDevmode_Checked" 
-                              Unchecked="ChkDevmode_Unchecked"/>
+                    <!-- Enable Debug Mode -->
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,2">
+                        <CheckBox x:Name="ChkDebugMode" 
+                                  Content="Enable Debug Mode" 
+                                  Margin="0" 
+                                  Foreground="White" 
+                                  Checked="ChkDebugMode_Checked" 
+                                  Unchecked="ChkDebugMode_Unchecked"
+                                  VerticalAlignment="Center"/>
+                        <TextBlock Text="Logs all activities." 
+                                   TextWrapping="Wrap"
+                                   Foreground="#AAA"
+                                   FontSize="9"
+                                   Margin="10,0,0,0"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
 
-                    <TextBlock Text="Enables extra features that require specific apps to be installed or configured."
-                               TextWrapping="Wrap"
-                               Foreground="#AAA"
-                               FontSize="11"
-                               Margin="20,5,0,0"/>
+                    <!-- Enable Developer Mode -->
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,2">
+                        <CheckBox x:Name="ChkDevmode" 
+                                  Content="Enable Developer Mode" 
+                                  Margin="0" 
+                                  Foreground="White" 
+                                  Checked="ChkDevmode_Checked" 
+                                  Unchecked="ChkDevmode_Unchecked"
+                                  VerticalAlignment="Center"/>
+                        <TextBlock Text="Enables extra features." 
+                                   TextWrapping="Wrap"
+                                   Foreground="#AAA"
+                                   FontSize="9"
+                                   Margin="10,0,0,0"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
                 </StackPanel>
 
             </StackPanel>

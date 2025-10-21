@@ -323,7 +323,13 @@ namespace phone_utils
 
             public override string ToString() => string.IsNullOrWhiteSpace(Name) ? base.ToString() : Name;
         }
-
+        public class ThemesConfig
+        {
+            public string Name { get; set; } = string.Empty;
+            public string Foreground { get; set; } = "White";
+            public string Background { get; set; } = "#5539cc";
+            public string Hover { get; set; } = "#553fff";
+        }
         public class ButtonStyleConfig
         {
             public string Foreground { get; set; } = "White";
@@ -344,6 +350,7 @@ namespace phone_utils
             public FileSyncConfig FileSync { get; set; } = new FileSyncConfig();
             public ScrcpyConfig ScrcpySettings { get; set; } = new ScrcpyConfig();
             public YTDLConfig YTDL { get; set; } = new YTDLConfig();
+            public List<ThemesConfig> Themes { get; set; } = new List<ThemesConfig>();
             public ButtonStyleConfig ButtonStyle { get; set; } = new ButtonStyleConfig();
             public List<DeviceConfig> SavedDevices { get; set; } = new List<DeviceConfig>();
             public SpecialOptionsConfig SpecialOptions { get; set; } = new SpecialOptionsConfig();
@@ -356,7 +363,11 @@ namespace phone_utils
 
         public class PathsConfig
         {
-            public string Adb { get; set; } = string.Empty;
+            public string Adb { get; set; } = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "Phone Utils",
+                "Resources",
+                "adb.exe");
             public string Scrcpy { get; set; } = string.Empty;
             public string Background { get; set; } = string.Empty;
         }
@@ -389,11 +400,36 @@ namespace phone_utils
             {
                 try
                 {
-                    if (!File.Exists(path)) return new AppConfig();
-                    string json = File.ReadAllText(path);
-                    return JsonConvert.DeserializeObject<AppConfig>(json) ?? new AppConfig();
+                    AppConfig config;
+                    if (!File.Exists(path))
+                    {
+                        config = new AppConfig();
+                    }
+                    else
+                    {
+                        string json = File.ReadAllText(path);
+                        config = JsonConvert.DeserializeObject<AppConfig>(json) ?? new AppConfig();
+                    }
+
+                    // Ensure default themes exist if none are defined
+                    if (config.Themes == null || config.Themes.Count == 0)
+                    {
+                        config.Themes = new List<SetupControl.ThemesConfig>
+                {
+                    new SetupControl.ThemesConfig { Name = "Default Blurple", Foreground = "White", Background = "#5539cc", Hover = "#553fff" },
+                    new SetupControl.ThemesConfig { Name = "SnailDev Red", Foreground = "#FF000000", Background = "#FFC30000", Hover = "#FF8D0000" },
+                    new SetupControl.ThemesConfig { Name = "Grayscale", Foreground = "#FFFFFFFF", Background = "#FF323232", Hover = "#FF282828" },
+                    new SetupControl.ThemesConfig { Name = "White", Foreground = "#FF000000", Background = "#FFFFFFFF", Hover = "#FFC8C8C8" },
+                    new SetupControl.ThemesConfig { Name = "Rissoe", Foreground = "#FF82FF5E", Background = "#FF0743A0", Hover = "#FF003282" }
+                };
+                    }
+
+                    return config;
                 }
-                catch { return new AppConfig(); }
+                catch
+                {
+                    return new AppConfig();
+                }
             }
 
             public static void Save(string path, AppConfig config)
@@ -409,6 +445,7 @@ namespace phone_utils
                     Debugger.show("ConfigManager.Save exception: " + ex.Message);
                 }
             }
+
         }
         #endregion
     }

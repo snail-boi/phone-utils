@@ -3,6 +3,8 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Xml.Linq;
+using YourApp;
 using static phone_utils.SetupControl;
 
 namespace phone_utils
@@ -16,6 +18,7 @@ namespace phone_utils
             "Phone Utils",
             "config.json"
         );
+
         private bool _isInitializing = true;
 
         public SettingsControl(MainWindow main)
@@ -27,6 +30,29 @@ namespace phone_utils
             _config = ConfigManager.Load(configPath);
             ApplyConfigToUI();
             _isInitializing = false;
+            LoadThemesIntoComboBox();
+        }
+        private void LoadThemesIntoComboBox()
+        {
+            if (_config?.Themes == null || _config.Themes.Count == 0)
+            {
+                CmbThemes.ItemsSource = null;
+                return;
+            }
+
+            CmbThemes.ItemsSource = _config.Themes;
+            CmbThemes.DisplayMemberPath = "Name";
+
+            // Select the theme that matches the current ButtonStyle
+            var currentTheme = _config.Themes.FirstOrDefault(t =>
+                t.Background == _config.ButtonStyle.Background &&
+                t.Foreground == _config.ButtonStyle.Foreground &&
+                t.Hover == _config.ButtonStyle.Hover);
+
+            if (currentTheme != null)
+                CmbThemes.SelectedItem = currentTheme;
+            else
+                CmbThemes.SelectedIndex = 0; // fallback if no match
         }
 
         private void ApplyConfigToUI()
@@ -57,6 +83,114 @@ namespace phone_utils
             BtnPickForeground.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(style.Foreground));
             BtnPickHover.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(style.Hover));
         }
+
+        private void BtnSaveTheme_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new ThemeNameDialog
+            {
+                Owner = Window.GetWindow(this)
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                var newTheme = new ThemesConfig
+                {
+                    Name = dialog.ThemeName,
+                    Foreground = _config.ButtonStyle.Foreground,
+                    Background = _config.ButtonStyle.Background,
+                    Hover = _config.ButtonStyle.Hover
+                };
+
+                // ✅ Add the new theme to your theme list
+                _config.Themes ??= new List<ThemesConfig>();
+                _config.Themes.Add(newTheme);
+
+                MessageBox.Show($"Theme '{newTheme.Name}' saved successfully!", "Success",
+                                MessageBoxButton.OK, MessageBoxImage.Information);
+                SaveConfig(false);
+            }
+        }
+
+        private void CmbThemes_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (CmbThemes.SelectedItem is ThemesConfig selectedTheme)
+            {
+                _config.ButtonStyle.Foreground = selectedTheme.Foreground;
+                _config.ButtonStyle.Background = selectedTheme.Background;
+                _config.ButtonStyle.Hover = selectedTheme.Hover;
+                SaveConfig(false);
+                ApplyTheme(selectedTheme);
+                _main.ReloadConfiguration();
+                LoadThemesIntoComboBox();
+            }
+        }
+
+        private void ApplyTheme(ThemesConfig theme)
+        {
+            if (theme == null) return;
+
+            // Just copy the values to ButtonStyle
+            _config.ButtonStyle.Foreground = theme.Foreground;
+            _config.ButtonStyle.Background = theme.Background;
+            _config.ButtonStyle.Hover = theme.Hover;
+        }
+
+
+        private void BtnDeleteTheme_Click(object sender, RoutedEventArgs e)
+        {
+            if (CmbThemes.SelectedItem is ThemesConfig selectedTheme)
+            {
+                var result = MessageBox.Show(
+                    $"Are you sure you want to delete the theme '{selectedTheme.Name}'?",
+                    "Confirm Delete",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning
+                );
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    // Remove the selected theme
+                    _config.Themes.Remove(selectedTheme);
+
+                    // Save config
+                    SaveConfig(false);
+
+                    // Reload the themes in ComboBox
+                    LoadThemesIntoComboBox();
+
+                    // Optionally, reset button style to default if the deleted theme was selected
+                    if (_config.ButtonStyle.Background == selectedTheme.Background &&
+                        _config.ButtonStyle.Foreground == selectedTheme.Foreground &&
+                        _config.ButtonStyle.Hover == selectedTheme.Hover)
+                    {
+                        // Reset to first theme or defaults
+                        if (_config.Themes.Count > 0)
+                        {
+                            ApplyTheme(_config.Themes[0]);
+                        }
+                        else
+                        {
+                            _config.ButtonStyle = new ButtonStyleConfig
+                            {
+                                Background = "#FFFFFF",
+                                Foreground = "#000000",
+                                Hover = "#CCCCCC"
+                            };
+                            ApplyButtonColors(_config.ButtonStyle);
+                        }
+                    }
+
+                    MessageBox.Show($"Theme '{selectedTheme.Name}' deleted successfully.", "Deleted", MessageBoxButton.OK, MessageBoxImage.Information);
+                    LoadThemesIntoComboBox();
+                }
+            }
+            else
+            {
+                MessageBox.Show("Please select a theme to delete.", "No Theme Selected", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+            }
+        }
+
+
 
         #region Color Pickers
         private void PickColor(SolidColorBrush currentBrush, Action<Color> apply)

@@ -1,0 +1,19 @@
+﻿<Window x:Class="YourApp.ThemeNameDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Enter Theme Name"
+        Height="150" Width="300"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        WindowStyle="ToolWindow">
+
+    <StackPanel Margin="20">
+        <TextBlock Text="Enter theme name:" Margin="0,0,0,8" FontWeight="Bold"/>
+        <TextBox x:Name="TxtThemeName" Margin="0,0,0,12"/>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="OK" Width="75" Margin="0,0,10,0" Click="Ok_Click"/>
+            <Button Content="Cancel" Width="75" Click="Cancel_Click"/>
+        </StackPanel>
+    </StackPanel>
+</Window>
