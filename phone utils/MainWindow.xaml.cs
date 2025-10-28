@@ -49,7 +49,8 @@ namespace phone_utils
             mediaController.Initialize();
 
             LoadConfiguration();
-            DetectDeviceAsync();
+            // Move device detection to the Loaded event so we can await it properly
+            this.Loaded += MainWindow_Loaded;
             UpdateBackgroundImage();
 
             connectionCheckTimer = new DispatcherTimer
@@ -58,6 +59,19 @@ namespace phone_utils
             };
             connectionCheckTimer.Tick += ConnectionCheckTimer_Tick;
             connectionCheckTimer.Start();
+        }
+
+        private async void MainWindow_Loaded(object? sender, RoutedEventArgs e)
+        {
+            // Await initial device detection to ensure any exceptions are observed
+            try
+            {
+                await DetectDeviceAsync();
+            }
+            catch (Exception ex)
+            {
+                Debugger.show($"Error during initial device detection: {ex.Message}");
+            }
         }
         #endregion
 
@@ -425,7 +439,7 @@ namespace phone_utils
                 else
                 {
                     // Normal mode: detect active foreground app
-                    DisplayAppActivity();
+                    await DisplayAppActivity();
                 }
             }
             catch (Exception ex)
@@ -493,8 +507,7 @@ namespace phone_utils
 
 
 
-
-        private async void DisplayAppActivity()
+        private async Task DisplayAppActivity()
         {
             var sleepState = await AdbHelper.RunAdbCaptureAsync($"-s {currentDevice} shell dumpsys power");
             var match = Regex.Match(sleepState, @"mWakefulness\s*=\s*(\w+)", RegexOptions.IgnoreCase);
@@ -644,7 +657,7 @@ namespace phone_utils
             }
         }
 
-        private void BtnRefresh_Click(object sender, RoutedEventArgs e) => DetectDeviceAsync();
+        private async void BtnRefresh_Click(object sender, RoutedEventArgs e) => await DetectDeviceAsync();
         #endregion
 
         #region Utility Methods

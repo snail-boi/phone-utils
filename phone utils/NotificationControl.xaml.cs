@@ -1,4 +1,9 @@
-﻿using System.Windows;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -10,6 +15,7 @@ namespace phone_utils
         private MainWindow mainWindow;
         private string currentDevice;
         private DispatcherTimer refreshTimer;
+        private CancellationTokenSource _cts;
 
         public NotificationControl(MainWindow parent, string device)
         {
@@ -17,64 +23,95 @@ namespace phone_utils
             mainWindow = parent;
             currentDevice = device;
 
+            _cts = new CancellationTokenSource();
+
             // Stop the timer when the control is unloaded
             this.Unloaded += NotificationControl_Unloaded;
 
             // Auto-refresh every 60 seconds
             refreshTimer = new DispatcherTimer();
             refreshTimer.Interval = TimeSpan.FromSeconds(60);
-            refreshTimer.Tick += async (s, e) => await LoadNotificationsAsync();
+            // Use non-async event handler and fire-and-forget the Task so exceptions are observed inside the Task
+            refreshTimer.Tick += (s, e) => _ = LoadNotificationsAsync(_cts.Token);
             refreshTimer.Start();
 
-            _ = LoadNotificationsAsync();
+            // Initial load (fire-and-forget)
+            _ = LoadNotificationsAsync(_cts.Token);
         }
 
         private void NotificationControl_Unloaded(object sender, RoutedEventArgs e)
         {
             refreshTimer?.Stop();
+            try
+            {
+                _cts?.Cancel();
+                _cts?.Dispose();
+                _cts = null;
+            }
+            catch { }
         }
 
 
         private async void BtnRefreshNotifications_Click(object sender, RoutedEventArgs e)
         {
-            await LoadNotificationsAsync();
+            await LoadNotificationsAsync(_cts?.Token ?? CancellationToken.None);
         }
 
-        private async Task LoadNotificationsAsync()
+        private async Task LoadNotificationsAsync(CancellationToken ct = default)
         {
             try
             {
+                ct.ThrowIfCancellationRequested();
+
                 StatusText.Text = "Loading notifications...";
 
-                var notifications = await GetNotificationsFromDevice();
+                var notifications = await GetNotificationsFromDevice(ct).ConfigureAwait(false);
 
-                // No need for Dispatcher.Invoke here
-                DisplayNotifications(notifications);
-                StatusText.Text = $"Found {notifications.Count} notifications";
+                ct.ThrowIfCancellationRequested();
+
+                // Ensure UI update happens on dispatcher
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    DisplayNotifications(notifications);
+                    StatusText.Text = $"Found {notifications.Count} notifications";
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                // Quietly ignore cancellations
+                await Dispatcher.InvokeAsync(() => StatusText.Text = "Notification load cancelled");
             }
             catch (Exception ex)
             {
-                StatusText.Text = $"Error loading notifications: {ex.Message}";
+                await Dispatcher.InvokeAsync(() => StatusText.Text = $"Error loading notifications: {ex.Message}");
             }
         }
 
 
-        private async Task<List<NotificationInfo>> GetNotificationsFromDevice()
+        private async Task<List<NotificationInfo>> GetNotificationsFromDevice(CancellationToken ct = default)
         {
             var notifications = new List<NotificationInfo>();
 
             try
             {
+                ct.ThrowIfCancellationRequested();
+
                 // Get notification dump from Android
                 string output = await AdbHelper.RunAdbCaptureAsync($"-s {currentDevice} shell dumpsys notification --noredact");
 
-                // Parse the notification dump
-                notifications = ParseNotificationDump(output);
+                ct.ThrowIfCancellationRequested();
+
+                // Parse the notification dump off the UI thread
+                notifications = await Task.Run(() => ParseNotificationDump(output), ct).ConfigureAwait(false);
             }
-            catch (Exception)
+            catch (OperationCanceledException)
             {
-                throw new Exception("Unable to retrieve notifications from device");
-                
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Debugger.show($"GetNotificationsFromDevice failed: {ex.Message}");
+                throw new Exception("Unable to retrieve notifications from device", ex);
             }
 
             return notifications;
@@ -220,26 +257,6 @@ namespace phone_utils
 
             return input;
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         private void DisplayNotifications(List<NotificationInfo> notifications)
         {

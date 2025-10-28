@@ -40,11 +40,18 @@ namespace phone_utils
             LoadSavedSettings();
         }
 
-        private void ScrcpyControl_Loaded(object sender, RoutedEventArgs e)
+        private async void ScrcpyControl_Loaded(object sender, RoutedEventArgs e)
         {
             Debugger.show("ScrcpyControl loaded, hotkeysEnabled: " + _hotkeysEnabled); // Trace control load
             if (_hotkeysEnabled) InitializeGlobalHotkeys();
-            LoadInstalledApps();
+            try
+            {
+                await LoadInstalledApps();
+            }
+            catch (Exception ex)
+            {
+                Debugger.show("LoadInstalledApps failed: " + ex.Message);
+            }
         }
 
         #region Hotkeys
@@ -63,15 +70,16 @@ namespace phone_utils
                 _hotkeyManager?.Dispose();
                 _hotkeyManager = new GlobalHotkeyManager(parentWindow);
 
-                _hotkeyManager.MediaPlayPause += () => RunAdbKeyEvent(85);
-                _hotkeyManager.MediaNext += () => RunAdbKeyEvent(87);
-                _hotkeyManager.MediaPrev += () => RunAdbKeyEvent(88);
-                _hotkeyManager.ShiftVolumeUp += () => RunAdbKeyEvent(24);
-                _hotkeyManager.ShiftVolumeDown += () => RunAdbKeyEvent(25);
-                _hotkeyManager.InsertPressed += OnInsertPressed;
-                _hotkeyManager.PageUpPressed += () => LaunchApp("anddea.youtube");
-                _hotkeyManager.PageDownPressed += () => LaunchApp("in.krosbits.musicolet");
-                _hotkeyManager.EndPressed += () => LaunchApp("com.anilab.android");
+                // Use fire-and-forget wrappers so hotkey manager can keep Action signatures but we avoid async void
+                _hotkeyManager.MediaPlayPause += () => _ = RunAdbKeyEvent(85);
+                _hotkeyManager.MediaNext += () => _ = RunAdbKeyEvent(87);
+                _hotkeyManager.MediaPrev += () => _ = RunAdbKeyEvent(88);
+                _hotkeyManager.ShiftVolumeUp += () => _ = RunAdbKeyEvent(24);
+                _hotkeyManager.ShiftVolumeDown += () => _ = RunAdbKeyEvent(25);
+                _hotkeyManager.InsertPressed += () => _ = OnInsertPressedAsync();
+                _hotkeyManager.PageUpPressed += () => _ = LaunchApp("anddea.youtube");
+                _hotkeyManager.PageDownPressed += () => _ = LaunchApp("in.krosbits.musicolet");
+                _hotkeyManager.EndPressed += () => _ = LaunchApp("com.anilab.android");
 
                 Debugger.show("Global hotkeys initialized."); // Confirm hotkey setup
             }
@@ -93,21 +101,42 @@ namespace phone_utils
         {
             Debugger.show("RunAdbKeyEvent called with keyCode: " + keyCode); // Trace key events
             if (!_hotkeysEnabled || string.IsNullOrEmpty(_device)) return;
-            await AdbHelper.RunAdbAsync($"-s {_device} shell input keyevent {keyCode}");
+            try
+            {
+                await AdbHelper.RunAdbAsync($"-s {_device} shell input keyevent {keyCode}").ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                Debugger.show("RunAdbKeyEvent failed: " + ex.Message);
+            }
         }
 
-        private async void OnInsertPressed()
+        private async Task OnInsertPressedAsync()
         {
             Debugger.show("unlocking phone."); // Trace Insert pressed
             if (!_hotkeysEnabled || string.IsNullOrEmpty(_device) || _device.Contains(":")) return;
-            await AdbHelper.RunAdbAsync($"-s {_device} shell input text {_appConfig.SelectedDevicePincode}");
+            try
+            {
+                await AdbHelper.RunAdbAsync($"-s {_device} shell input text {_appConfig.SelectedDevicePincode}").ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                Debugger.show("OnInsertPressed failed: " + ex.Message);
+            }
         }
 
         private async Task LaunchApp(string packageName)
         {
             Debugger.show("Launching app: " + packageName); // Trace which app is being launched
             if (!_hotkeysEnabled || string.IsNullOrEmpty(_device)) return;
-            await AdbHelper.RunAdbAsync($"-s {_device} shell monkey -p {packageName} -c android.intent.category.LAUNCHER 1");
+            try
+            {
+                await AdbHelper.RunAdbAsync($"-s {_device} shell monkey -p {packageName} -c android.intent.category.LAUNCHER 1").ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                Debugger.show("LaunchApp failed: " + ex.Message);
+            }
         }
 
         private void ChkEnableHotkeys_Checked(object sender, RoutedEventArgs e) => ToggleHotkeys(true);
@@ -334,57 +363,58 @@ namespace phone_utils
             return args;
         }
 
-        public Task RunScrcpyAsync(string args)
+        public async Task RunScrcpyAsync(string args)
         {
             Debugger.show("RunScrcpyAsync called with args: " + args); // Trace scrcpy async launch
             _main.DeviceStatusText.Text = args.Contains("--no-audio")
                 ? "Device Status: Casting without audio"
                 : "Device Status: Casting with audio";
 
-            return Task.Run(async () =>
+            if (!File.Exists(_SCRCPY_PATH))
             {
-                if (!File.Exists(_SCRCPY_PATH))
+                Debugger.show("scrcpy.exe not found at path: " + _SCRCPY_PATH); // Trace missing executable
+                MessageBox.Show("scrcpy.exe not found!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            try
+            {
+                var psi = new ProcessStartInfo
                 {
-                    Debugger.show("scrcpy.exe not found at path: " + _SCRCPY_PATH); // Trace missing executable
-                    MessageBox.Show("scrcpy.exe not found!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    FileName = _SCRCPY_PATH,
+                    Arguments = $"-s {_device} {args}",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                Debugger.show("Starting scrcpy process with command: " + psi.FileName + " " + psi.Arguments); // Trace process start
+
+                using var scrcpyProcess = Process.Start(psi);
+                if (scrcpyProcess == null)
+                {
+                    Debugger.show("Failed to start scrcpy process.");
                     return;
                 }
 
-                try
-                {
+                await Task.Delay(1000).ConfigureAwait(false);
+                await Dispatcher.InvokeAsync(() => _main.DeviceStatusText.Text += " - Ready");
+                Debugger.show("scrcpy process started successfully."); // Confirm process start
 
-                    var psi = new ProcessStartInfo
-                    {
-                        FileName = _SCRCPY_PATH,
-                        Arguments = $"-s {_device} {args}",
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    };
-                    Debugger.show("Starting scrcpy process with command: " + psi.FileName + " " + psi.Arguments); // Trace process start
+                // Wait for exit asynchronously
+                await scrcpyProcess.WaitForExitAsync().ConfigureAwait(false);
 
-                    var scrcpyProcess = Process.Start(psi);
-                    await Task.Delay(1000);
-                    Dispatcher.Invoke(() => _main.DeviceStatusText.Text += " - Ready");
-                    Debugger.show("scrcpy process started successfully."); // Confirm process start
-
-                    while (!scrcpyProcess.HasExited)
-                        await Task.Delay(500);
-
-
-                    Debugger.show("scrcpy process exited."); // Trace exit
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"scrcpy launch failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    Debugger.show("scrcpy launch exception: " + ex.Message); // Trace exception
-                }
-            });
+                Debugger.show("scrcpy process exited."); // Trace exit
+            }
+            catch (Exception ex)
+            {
+                await Dispatcher.InvokeAsync(() => MessageBox.Show($"scrcpy launch failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error));
+                Debugger.show("scrcpy launch exception: " + ex.Message); // Trace exception
+            }
         }
         #endregion
 
         #region Installed Apps
 
-        private async void LoadInstalledApps()
+        private async Task LoadInstalledApps()
         {
             Debugger.show("Loading installed apps..."); // Trace app loading start
             if (string.IsNullOrEmpty(_device))
@@ -403,12 +433,12 @@ namespace phone_utils
                                      .OrderBy(l => l)
                                      .ToList();
 
-                CmbAndroidApps.ItemsSource = packages;
+                await Dispatcher.InvokeAsync(() => CmbAndroidApps.ItemsSource = packages);
                 Debugger.show("Installed apps loaded: " + packages.Count + " apps."); // Confirm loaded apps
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to load installed apps: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                await Dispatcher.InvokeAsync(() => MessageBox.Show($"Failed to load installed apps: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error));
                 Debugger.show("LoadInstalledApps exception: " + ex.Message); // Trace exception
             }
         }
