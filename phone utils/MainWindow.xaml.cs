@@ -35,19 +35,18 @@ namespace phone_utils
         public bool devmode;
         public bool MusicPresence;
         public static bool debugmode;
-        private string lastSMTCTitle = null;
 
-
-        private Windows.Media.Playback.MediaPlayer mediaPlayer;
-        private Windows.Media.SystemMediaTransportControls smtcControls;
-        private Windows.Media.SystemMediaTransportControlsDisplayUpdater smtcDisplayUpdater;
+        private MediaController mediaController;
         #endregion
 
         #region Constructor
         public MainWindow()
         {
             InitializeComponent();
-            InitializeMediaPlayer();
+
+            // Initialize media controller (handles MediaPlayer/SMTC)
+            mediaController = new MediaController(Dispatcher, () => currentDevice, async () => await UpdateCurrentSongAsync());
+            mediaController.Initialize();
 
             LoadConfiguration();
             DetectDeviceAsync();
@@ -414,7 +413,7 @@ namespace phone_utils
                 if (string.IsNullOrEmpty(currentDevice))
                 {
                     DeviceStatusText.Text = "No device selected.";
-                    ClearMediaControls();
+                    mediaController?.Clear();
                     return;
                 }
 
@@ -432,7 +431,7 @@ namespace phone_utils
             catch (Exception ex)
             {
                 DeviceStatusText.Text = $"Error retrieving info: {ex.Message}";
-                ClearMediaControls();
+                mediaController?.Clear();
             }
         }
 
@@ -484,7 +483,7 @@ namespace phone_utils
                         DeviceStatusText.Text = $"Song: {title} by {artist}";
                         Debugger.show($"Now playing: {title} by {artist} ({album}) at {position} ms — Playing: {isPlaying}");
 
-                        UpdateMediaControls(title, artist, album, isPlaying);
+                        await mediaController.UpdateMediaControlsAsync(title, artist, album, isPlaying);
                         foundActiveSong = true;
                         break;
                     }
@@ -539,412 +538,6 @@ namespace phone_utils
 
 
 
-        #endregion
-
-        #region Media Controls
-        #region SMTC Initialization
-        private async void InitializeMediaPlayer()
-        {
-            try
-            {
-                mediaPlayer = new Windows.Media.Playback.MediaPlayer();
-
-                smtcControls = mediaPlayer.SystemMediaTransportControls;
-                smtcDisplayUpdater = smtcControls.DisplayUpdater;
-
-                smtcControls.IsEnabled = true;
-                smtcControls.IsPlayEnabled = true;
-                smtcControls.IsPauseEnabled = true;
-                smtcControls.IsNextEnabled = true;
-                smtcControls.IsPreviousEnabled = true;
-
-                smtcControls.ButtonPressed += smtcControls_ButtonPressed;
-
-                smtcDisplayUpdater.Type = MediaPlaybackType.Music;
-
-
-            }
-            catch (Exception ex)
-            {
-                Debugger.show($"MediaPlayer initialization failed: {ex.Message}");
-            }
-        }
-        #endregion
-
-        #region Media Control Actions
-        private async void smtcControls_ButtonPressed(SystemMediaTransportControls sender, SystemMediaTransportControlsButtonPressedEventArgs args)
-        {
-            Debugger.show($"SMTC Button Pressed: {args.Button}");
-            // SMTC events come in on a background thread
-            await Dispatcher.InvokeAsync(() =>
-            {
-                switch (args.Button)
-                {
-                    case SystemMediaTransportControlsButton.Play:
-                        PlayTrack();
-                        break;
-
-                    case SystemMediaTransportControlsButton.Pause:
-                        PauzeTrack();
-                        break;
-
-                    case SystemMediaTransportControlsButton.Next:
-                        PlayNextTrack();
-                        break;
-
-                    case SystemMediaTransportControlsButton.Previous:
-                        PlayPreviousTrack();
-                        break;
-                }
-            });
-        }
-        private async void PlayTrack()
-        {
-            await AdbHelper.RunAdbAsync($"-s {currentDevice} shell input keyevent 85");
-            smtcControls.PlaybackStatus = MediaPlaybackStatus.Playing;
-            Debugger.show("Play requested");
-        }
-        private async void PauzeTrack()
-        {
-            await AdbHelper.RunAdbAsync($"-s {currentDevice} shell input keyevent 85");
-            smtcControls.PlaybackStatus = MediaPlaybackStatus.Paused;
-            Debugger.show("Pause requested.");
-        }
-        private async void PlayNextTrack()
-        {
-            await AdbHelper.RunAdbAsync($"-s {currentDevice} shell input keyevent 87");
-            Thread.Sleep(500);
-            await UpdateCurrentSongAsync();
-            Debugger.show("Next track requested.");
-        }
-        private async void PlayPreviousTrack()
-        {
-            await AdbHelper.RunAdbAsync($"-s {currentDevice} shell input keyevent 88");
-            Thread.Sleep(500);
-            await UpdateCurrentSongAsync();
-            Debugger.show("Previous track requested.");
-        }
-
-
-        #endregion
-
-        #region coverartSMTC
-        private async Task<TimeSpan?> SetSMTCImageAsync(string fileNameWithoutExtension, string artist)
-        {
-            if (mediaPlayer == null || smtcDisplayUpdater == null)
-            {
-                InitializeMediaPlayer();
-                if (mediaPlayer == null || smtcDisplayUpdater == null)
-                {
-                    Debugger.show("Failed to initialize media player");
-                    return null;
-                }
-            }
-
-            string folderPath = @"C:\Users\wille\Desktop\Audio";
-            string[] audioExtensions = { ".mp3", ".flac", ".wav", ".m4a", ".ogg", ".opus" };
-            string[] imageExtensions = { ".webp", ".png", ".jpg", ".jpeg" };
-
-            try
-            {
-                Debugger.show($"Starting cover art search for: '{fileNameWithoutExtension}' by '{artist}'");
-
-                // === STEP 1: SONG SEARCH (partial match) ===
-                Debugger.show("Step 1.1: Searching for audio files (partial match)...");
-
-                List<string> matchingFiles = new List<string>();
-                foreach (var ext in audioExtensions)
-                {
-                    var files = Directory.GetFiles(folderPath, "*" + ext, SearchOption.AllDirectories)
-                        .Where(f => Path.GetFileNameWithoutExtension(f)
-                        .IndexOf(fileNameWithoutExtension, StringComparison.OrdinalIgnoreCase) >= 0)
-                        .ToList();
-
-                    matchingFiles.AddRange(files);
-                }
-
-                if (matchingFiles.Count == 0)
-                {
-                    Debugger.show("Step 1.1: No audio files found (partial match failed)");
-                    await SetDefaultImage();
-                    return null;
-                }
-
-                Debugger.show($"Step 1.1: Found {matchingFiles.Count} file(s) matching partially");
-
-                // === STEP 2: OPTIONAL ARTIST FILTER (partial match) ===
-                List<string> artistMatches = new List<string>();
-
-                if (!string.IsNullOrEmpty(artist) && matchingFiles.Count > 1)
-                {
-                    Debugger.show($"Step 1.2: Filtering by artist (partial match): '{artist}'");
-
-                    artistMatches = matchingFiles
-                        .Where(f => f.IndexOf(artist, StringComparison.OrdinalIgnoreCase) >= 0)
-                        .ToList();
-
-                    foreach (var file in artistMatches)
-                    {
-                        Debugger.show($"Step 1.2: Artist partial match: {Path.GetFileName(file)}");
-                    }
-                }
-
-                List<string> filesToProcess = artistMatches.Count > 0 ? artistMatches : matchingFiles;
-
-                // === STEP 3: EXTRACT DURATION FROM BEST MATCHED AUDIO FILE ===
-                string filePathForDuration = filesToProcess.FirstOrDefault(f => audioExtensions.Contains(Path.GetExtension(f).ToLower()));
-
-                TimeSpan? duration = null;
-                if (filePathForDuration != null)
-                {
-                    try
-                    {
-                        var tagFile = TagLib.File.Create(filePathForDuration);
-                        duration = tagFile.Properties.Duration;
-                        Debugger.show($"Duration of '{Path.GetFileName(filePathForDuration)}' is {duration}");
-                    }
-                    catch (Exception ex)
-                    {
-                        Debugger.show($"Failed to read audio file duration: {ex.Message}");
-                    }
-                }
-                else
-                {
-                    Debugger.show("No suitable audio file found to extract duration.");
-                }
-
-                // Prioritize subfolder files
-                var sortedFiles = filesToProcess.OrderByDescending(f =>
-                {
-                    string fileDir = Path.GetDirectoryName(f);
-                    return !fileDir.Equals(folderPath, StringComparison.OrdinalIgnoreCase);
-                }).ToList();
-
-                Debugger.show($"Step 2: Processing {sortedFiles.Count} file(s) (subfolder priority)");
-
-                // === STEP 4: TRY EACH FILE UNTIL COVER ART FOUND ===
-                foreach (var filePath in sortedFiles)
-                {
-                    Debugger.show($"Step 3: Processing file: {Path.GetFileName(filePath)}");
-
-                    StorageFile imageFile = await TryGetCoverArtForFile(filePath, folderPath, imageExtensions);
-
-                    if (imageFile != null)
-                    {
-                        smtcDisplayUpdater.Thumbnail = RandomAccessStreamReference.CreateFromFile(imageFile);
-                        smtcDisplayUpdater.Update();
-                        Debugger.show("SMTC image updated successfully");
-                        return duration;
-                    }
-
-                    Debugger.show($"Step 3: No cover art found for {Path.GetFileName(filePath)}, trying next file...");
-                }
-
-                Debugger.show("Step 3: All files exhausted, using default image");
-                await SetDefaultImage();
-
-                return duration;
-            }
-            catch (Exception ex)
-            {
-                Debugger.show($"Critical error in SetSMTCImageAsync: {ex.Message}");
-                await SetDefaultImage();
-                return null;
-            }
-        }
-
-
-        private async Task<StorageFile> TryGetCoverArtForFile(string filePath, string folderPath, string[] imageExtensions)
-        {
-            string fileDirectory = Path.GetDirectoryName(filePath);
-            string fileName = Path.GetFileNameWithoutExtension(filePath);
-            bool isInSubfolder = !fileDirectory.Equals(folderPath, StringComparison.OrdinalIgnoreCase);
-
-            // === FILES IN SUBFOLDERS ===
-            if (isInSubfolder)
-            {
-
-                Debugger.show($"Step 2.2: File is in subfolder: {Path.GetFileName(fileDirectory)}");
-
-                // Try cover.jpg and cover.png first
-                string coverJpg = Path.Combine(fileDirectory, "cover.jpg");
-                string coverPng = Path.Combine(fileDirectory, "cover.png");
-
-                if (File.Exists(coverJpg))
-                {
-                    Debugger.show("Step 2.2: Found cover.jpg in subfolder");
-                    return await StorageFile.GetFileFromPathAsync(coverJpg);
-                }
-                else if (File.Exists(coverPng))
-                {
-                    Debugger.show("Step 2.2: Found cover.png in subfolder");
-                    return await StorageFile.GetFileFromPathAsync(coverPng);
-                }
-                else
-                {
-
-                }
-
-                    Debugger.show("Step 2.2: No cover.jpg or cover.png found, trying TagLib");
-
-                // Fall back to TagLib for subfolder files
-                var tagLibImage = await TryExtractCoverFromTagLib(filePath);
-                if (tagLibImage != null)
-                {
-                    return tagLibImage;
-                }
-            }
-            // === FILES IN TOP-LEVEL FOLDER ===
-            else
-            {
-                Debugger.show("Step 2.1: File is in top-level folder, searching for image with same name");
-
-                foreach (var imgExt in imageExtensions)
-                {
-                    string imagePath = Path.Combine(fileDirectory + "\\images", fileName + imgExt);
-                    if (File.Exists(imagePath))
-                    {
-                        Debugger.show($"Step 2.1: Cover art found: {Path.GetFileName(imagePath)}");
-                        return await StorageFile.GetFileFromPathAsync(imagePath);
-                    }
-                }
-
-                Debugger.show("Step 2.1: No cover art image found, trying TagLib");
-
-                // Fall back to TagLib for top-level files
-                var tagLibImage = await TryExtractCoverFromTagLib(filePath);
-                if (tagLibImage != null)
-                {
-                    return tagLibImage;
-                }
-            }
-
-            return null;
-        }
-
-        private async Task<StorageFile> TryExtractCoverFromTagLib(string filePath)
-        {
-            Debugger.show("Step 2.3: Attempting to extract cover art from file metadata using TagLib");
-
-            try
-            {
-                var tagFile = CoverArt.File.Create(filePath);
-                if (tagFile.Tag.Pictures != null && tagFile.Tag.Pictures.Length > 0)
-                {
-                    var pictureData = tagFile.Tag.Pictures[0].Data.Data;
-                    string tempPath = Path.Combine(Path.GetTempPath(), "smtc_cover.jpg");
-                    await File.WriteAllBytesAsync(tempPath, pictureData);
-                    Debugger.show("Step 2.3: Cover art extracted from metadata successfully");
-                    return await StorageFile.GetFileFromPathAsync(tempPath);
-                }
-                else
-                {
-                    Debugger.show("Step 2.3: No embedded cover art found in metadata");
-                }
-            }
-            catch (Exception tagEx)
-            {
-                Debugger.show($"Step 2.3: TagLib extraction failed: {tagEx.Message}");
-            }
-
-            return null;
-        }
-
-        private async Task SetDefaultImage()
-        {
-            try
-            {
-                string defaultImagePath = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "Phone Utils", "Resources", "logo.png"
-                );
-
-                Debugger.show("Step 2.4: Using default image");
-                var imageFile = await StorageFile.GetFileFromPathAsync(defaultImagePath);
-                smtcDisplayUpdater.Thumbnail = RandomAccessStreamReference.CreateFromFile(imageFile);
-                smtcDisplayUpdater.Update();
-                Debugger.show("SMTC updated with default image");
-            }
-            catch (Exception ex)
-            {
-                Debugger.show($"Failed to set default image: {ex.Message}");
-            }
-        }
-        #endregion
-
-        #region SMTC Update & Clear
-        private async Task UpdateMediaControls(string title, string artist, string album, bool IsPlaying)
-        {
-            // Check if the title is the same as last time
-            if (string.Equals(lastSMTCTitle, title, StringComparison.OrdinalIgnoreCase))
-            {
-                Debugger.show($"SMTC title '{title}' is same as last. Skipping update.");
-                return;
-            }
-
-            lastSMTCTitle = title; // Update last known title
-            smtcControls.PlaybackStatus = IsPlaying
-                ? MediaPlaybackStatus.Playing
-                : MediaPlaybackStatus.Paused;
-
-            TimeSpan? duration = await SetSMTCImageAsync(title, artist);
-            if (mediaPlayer == null || smtcDisplayUpdater == null)
-                return;
-
-            try
-            {
-                var musicProperties = smtcDisplayUpdater.MusicProperties;
-                musicProperties.Title = title;
-                musicProperties.Artist = artist;
-                musicProperties.AlbumTitle = album;
-
-                smtcDisplayUpdater.Update();
-
-                // Update timeline properties if duration is available
-                if (duration.HasValue)
-                {
-                    var timelineProps = new SystemMediaTransportControlsTimelineProperties
-                    {
-                        StartTime = TimeSpan.Zero,
-                        EndTime = duration.Value,
-                        
-                    };
-                    smtcControls.UpdateTimelineProperties(timelineProps);
-                }
-            }
-            catch (Exception ex)
-            {
-            }
-        }
-
-        private void ClearMediaControls()
-        {
-            try
-            {
-                if (smtcDisplayUpdater != null)
-                {
-                    smtcDisplayUpdater.ClearAll();
-                    smtcDisplayUpdater.Update();
-                }
-
-                if (mediaPlayer != null)
-                {
-                    mediaPlayer.Pause();
-                    mediaPlayer.Dispose();
-                    mediaPlayer = null;
-                }
-
-                smtcControls = null;
-                smtcDisplayUpdater = null;
-            }
-            catch (Exception ex)
-            {
-                Debugger.show($"Failed to clear media controls: {ex.Message}");
-            }
-        }
-
-
-        #endregion
         #endregion
 
         #region Button Handlers
@@ -1090,16 +683,7 @@ namespace phone_utils
             {
                 CloseAllAdbProcesses();
 
-                // Changed from discordClient.Dispose():
-                if (smtcDisplayUpdater != null)
-                {
-                    smtcDisplayUpdater.ClearAll();
-                }
-
-                if (mediaPlayer != null)
-                {
-                    mediaPlayer.Dispose();
-                }
+                mediaController?.Clear();
             }
             catch { }
         }
