@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-	<Product Id="*" Name="Phone Utils" Language="1033" Version="1.2.8.0" Manufacturer="Snailtech" UpgradeCode="e7b1c9f8-6f7d-4a2b-9f3d-2e5b8a1c4d9f">
+	<Product Id="*" Name="Phone Utils" Language="1033" Version="1.2.9.0" Manufacturer="Snailtech" UpgradeCode="e7b1c9f8-6f7d-4a2b-9f3d-2e5b8a1c4d9f">
 		<Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" />
 
 		<Media Id="1" Cabinet="media1.cab" EmbedCab="yes" CompressionLevel="high"/>
