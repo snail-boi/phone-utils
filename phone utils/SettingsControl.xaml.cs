@@ -29,9 +29,38 @@ namespace phone_utils
             Debugger.show("SettingsControl initialized. Loading configuration from: " + configPath);
             _config = ConfigManager.Load(configPath);
             ApplyConfigToUI();
+            InitializeUpdateIntervalUI();
             _isInitializing = false;
             LoadThemesIntoComboBox();
         }
+
+        private void InitializeUpdateIntervalUI()
+        {
+            // Ensure UI element exists in XAML: we'll look for CmbUpdateInterval
+            try
+            {
+                if (this.FindName("CmbUpdateInterval") is ComboBox cmb)
+                {
+                    cmb.ItemsSource = new[] { "Extreme (1s)", "Fast (5s)", "Medium (15s)", "Slow (30s)", "No automatic update" };
+                    int mode = _config.UpdateIntervalMode;
+                    if (mode < 1 || mode > 5) mode = 3;
+                    cmb.SelectedIndex = mode - 1;
+                    cmb.SelectionChanged += CmbUpdateInterval_SelectionChanged;
+                }
+            }
+            catch { }
+        }
+
+        private void CmbUpdateInterval_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isInitializing) return;
+            if (!(sender is ComboBox cmb)) return;
+            int sel = cmb.SelectedIndex;
+            if (sel < 0) return;
+            _config.UpdateIntervalMode = sel + 1;
+            SaveConfig(false);
+        }
+
         private void LoadThemesIntoComboBox()
         {
             if (_config?.Themes == null || _config.Themes.Count == 0)

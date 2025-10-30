@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Threading.Tasks;
 
 namespace phone_utils
 {
@@ -92,11 +93,11 @@ namespace phone_utils
         #endregion
 
         #region Config Save / Reload
-        private void SaveConfiguration(object sender, RoutedEventArgs e)
+        private async void SaveConfiguration(object sender, RoutedEventArgs e)
         {
             Debugger.show("SaveConfiguration triggered.");
             UpdateConfigFromUI();
-            SaveConfig(true);
+            await SaveConfig(true);
         }
 
         private void UpdateConfigFromUI()
@@ -115,7 +116,7 @@ namespace phone_utils
             }
         }
 
-        private void SaveConfig(bool showmessage)
+        private async Task SaveConfig(bool showmessage)
         {
             try
             {
@@ -124,7 +125,10 @@ namespace phone_utils
 
                 ConfigManager.Save(configPath, _config);
                 Debugger.show("Configuration saved to: " + configPath);
-                _main.ReloadConfiguration();
+
+                // Ensure the main window reloads configuration and wait for completion
+                await _main.ReloadConfiguration();
+
                 if (showmessage)
                     MessageBox.Show("Configuration saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -140,7 +144,7 @@ namespace phone_utils
         private async Task<string> GetDeviceIpAsync(string serial)
         {
             Debugger.show("Getting IP for device: " + serial);
-            string output = await AdbHelper.RunAdbCaptureAsync($"-s {serial} shell ip addr show wlan0");
+            string output = await AdbHelper.RunAdbCaptureAsync($"-s {serial} shell ip addr show wlan0").ConfigureAwait(false);
 
             var match = Regex.Match(output, @"inet (\d+\.\d+\.\d+\.\d+)/");
             Debugger.show("IP result: " + (match.Success ? match.Groups[1].Value : "null"));
@@ -149,15 +153,21 @@ namespace phone_utils
 
         private async Task<string> GetFirstUsbSerialAsync()
         {
-            string output = await AdbHelper.RunAdbCaptureAsync("devices");
+            string output = await AdbHelper.RunAdbCaptureAsync("devices").ConfigureAwait(false);
             Debugger.show("ADB devices output:\n" + output);
 
             foreach (var line in output.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
             {
-                if (line.EndsWith("\tdevice"))
+                var trimmed = line.Trim();
+                // Expected format: <serial>\tdevice
+                if (trimmed.EndsWith("\tdevice"))
                 {
-                    Debugger.show("First USB device found: " + line.Split('\t')[0]);
-                    return line.Split('\t')[0];
+                    var parts = trimmed.Split('\t');
+                    if (parts.Length > 0)
+                    {
+                        Debugger.show("First USB device found: " + parts[0]);
+                        return parts[0];
+                    }
                 }
             }
 
@@ -167,92 +177,100 @@ namespace phone_utils
 
         private async void SaveCurrentDevice(object sender, RoutedEventArgs e)
         {
-            string adbPath = TxtAdbPath.Text;
-            if (string.IsNullOrWhiteSpace(adbPath) || !File.Exists(adbPath))
+            try
             {
-                MessageBox.Show("Please select a valid adb.exe path first.", "ADB Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
-                Debugger.show("Invalid ADB path: " + adbPath);
-                return;
-            }
-
-            string serial = await GetFirstUsbSerialAsync();
-            if (serial == null)
-            {
-                MessageBox.Show("No USB device found. Ensure USB debugging is enabled.", "Device Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            // Try to get IP (Wi-Fi)
-            string ip = await GetDeviceIpAsync(serial);
-            string tcpIpWithPort;
-
-            if (string.IsNullOrEmpty(ip))
-            {
-                // Ask user if they want to save as USB-only
-                var result = MessageBox.Show(
-                    "No Wi-Fi IP detected for this device. Do you want to save it as USB only?",
-                    "IP Not Found",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question
-                );
-
-                if (result != MessageBoxResult.Yes)
+                string adbPath = TxtAdbPath.Text;
+                if (string.IsNullOrWhiteSpace(adbPath) || !File.Exists(adbPath))
                 {
+                    MessageBox.Show("Please select a valid adb.exe path first.", "ADB Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    Debugger.show("Invalid ADB path: " + adbPath);
                     return;
                 }
 
-                tcpIpWithPort = "None";
-                Debugger.show($"Device IP: {ip}, TCP: {tcpIpWithPort}");
+                string serial = await GetFirstUsbSerialAsync();
+                if (serial == null)
+                {
+                    MessageBox.Show("No USB device found. Ensure USB debugging is enabled.", "Device Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Try to get IP (Wi-Fi)
+                string ip = await GetDeviceIpAsync(serial);
+                string tcpIpWithPort;
+
+                if (string.IsNullOrEmpty(ip))
+                {
+                    // Ask user if they want to save as USB-only
+                    var result = MessageBox.Show(
+                        "No Wi-Fi IP detected for this device. Do you want to save it as USB only?",
+                        "IP Not Found",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question
+                    );
+
+                    if (result != MessageBoxResult.Yes)
+                    {
+                        return;
+                    }
+
+                    tcpIpWithPort = "None";
+                    Debugger.show($"Device IP: {ip}, TCP: {tcpIpWithPort}");
+                }
+                else
+                {
+                    tcpIpWithPort = $"{ip}:5555";
+                    Debugger.show($"Device IP: {ip}, TCP: {tcpIpWithPort}");
+                }
+
+                string name = TxtDeviceName.Text.Trim();
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    MessageBox.Show("Please enter a device name.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                var newDevice = new DeviceConfig
+                {
+                    Name = name,
+                    UsbSerial = serial,
+                    TcpIp = tcpIpWithPort,
+                    LastConnected = DateTime.Now,
+                    Pincode = TxtPincode.Password
+                };
+                Debugger.show("New device created: " + newDevice.UsbSerial + ", Name: " + newDevice.Name);
+
+                // Remove existing device with same serial
+                var existing = _config.SavedDevices.FirstOrDefault(d => d.UsbSerial == serial);
+                if (existing != null)
+                {
+                    _config.SavedDevices.Remove(existing);
+                    Debugger.show("Removed existing device with same serial: " + serial);
+                }
+
+                _config.SavedDevices.Add(newDevice);
+                UpdateSelectedDevice(newDevice);
+
+                // Refresh ComboBox
+                DeviceSelector.SelectionChanged -= DeviceSelector_SelectionChanged;
+                DeviceSelector.ItemsSource = null;
+                DeviceSelector.ItemsSource = _config.SavedDevices;
+                DeviceSelector.SelectedValue = serial;
+                DeviceSelector.SelectionChanged += DeviceSelector_SelectionChanged;
+
+                await SaveConfig(false);
+
+                string msg = tcpIpWithPort == "None"
+                    ? "Device saved successfully as USB only."
+                    : $"Device saved successfully. Detected IP: {tcpIpWithPort}";
+
+                Debugger.show(msg);
+                MessageBox.Show(msg, "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-            else
+            catch (Exception ex)
             {
-                tcpIpWithPort = $"{ip}:5555";
-                Debugger.show($"Device IP: {ip}, TCP: {tcpIpWithPort}");
+                MessageBox.Show($"Failed to save device: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Debugger.show("SaveCurrentDevice exception: " + ex.Message);
             }
-
-            string name = TxtDeviceName.Text.Trim();
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                MessageBox.Show("Please enter a device name.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            var newDevice = new DeviceConfig
-            {
-                Name = name,
-                UsbSerial = serial,
-                TcpIp = tcpIpWithPort,
-                LastConnected = DateTime.Now,
-                Pincode = TxtPincode.Password
-            };
-            Debugger.show("New device created: " + newDevice.UsbSerial + ", Name: " + newDevice.Name);
-
-            // Remove existing device with same serial
-            var existing = _config.SavedDevices.FirstOrDefault(d => d.UsbSerial == serial);
-            if (existing != null)
-            {
-                _config.SavedDevices.Remove(existing);
-                Debugger.show("Removed existing device with same serial: " + serial);
-            }
-
-            _config.SavedDevices.Add(newDevice);
-            UpdateSelectedDevice(newDevice);
-
-            // Refresh ComboBox
-            DeviceSelector.SelectionChanged -= DeviceSelector_SelectionChanged;
-            DeviceSelector.ItemsSource = null;
-            DeviceSelector.ItemsSource = _config.SavedDevices;
-            DeviceSelector.SelectedValue = serial;
-            DeviceSelector.SelectionChanged += DeviceSelector_SelectionChanged;
-
-            SaveConfig(false);
-
-            string msg = tcpIpWithPort == "None"
-                ? "Device saved successfully as USB only."
-                : $"Device saved successfully. Detected IP: {tcpIpWithPort}";
-
-            Debugger.show(msg);
-            MessageBox.Show(msg, "Success", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void UpdateSelectedDevice(DeviceConfig device)
@@ -265,7 +283,7 @@ namespace phone_utils
             TxtPincode.Password = device.Pincode;
         }
 
-        private void DeleteSelectedDevice(object sender, RoutedEventArgs e)
+        private async void DeleteSelectedDevice(object sender, RoutedEventArgs e)
         {
             if (DeviceSelector.SelectedItem is not DeviceConfig selectedDevice)
                 return;
@@ -297,17 +315,17 @@ namespace phone_utils
             DeviceSelector.ItemsSource = _config.SavedDevices;
             DeviceSelector.SelectionChanged += DeviceSelector_SelectionChanged;
 
-            SaveConfig(false);
+            await SaveConfig(false);
         }
 
-        private void DeviceSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private async void DeviceSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (DeviceSelector.SelectedItem is DeviceConfig selectedDevice)
             {
                 Debugger.show("DeviceSelector changed to: " + selectedDevice.UsbSerial);
                 UpdateSelectedDevice(selectedDevice);
                 UpdateConfigFromUI();
-                SaveConfig(false);
+                await SaveConfig(false);
             }
         }
         #endregion
@@ -355,6 +373,10 @@ namespace phone_utils
             public List<DeviceConfig> SavedDevices { get; set; } = new List<DeviceConfig>();
             public SpecialOptionsConfig SpecialOptions { get; set; } = new SpecialOptionsConfig();
 
+            // Update interval mode for automatic updates in MainWindow
+            // 1 = Extreme (1s), 2 = Fast (5s), 3 = Medium (15s), 4 = Slow (30s), 5 = No automatic update
+            public int UpdateIntervalMode { get; set; } = 3;
+            
             public string SelectedDeviceUSB { get; set; } = string.Empty;
             public string SelectedDeviceName { get; set; } = string.Empty;
             public string SelectedDeviceWiFi { get; set; } = string.Empty;

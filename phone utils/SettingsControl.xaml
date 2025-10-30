@@ -9,6 +9,8 @@
              Background="#661E1E1E">
 
     <UserControl.Resources>
+        <!-- Converter to show SelectedItem (supports objects with Name or plain strings) -->
+        <local:SelectedItemDisplayConverter x:Key="SelectedItemDisplayConverter" />
         <!-- Modern Button Style -->
         <Style x:Key="ModernButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="{DynamicResource ButtonBackground}" />
@@ -90,13 +92,105 @@
             <Setter Property="FontSize" Value="12"/>
         </Style>
 
-        <!-- ComboBox Style -->
+        <!-- ComboBox Style: rounded with white background and black text (fixed layout) -->
         <Style TargetType="ComboBox">
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Background" Value="#222"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="Background" Value="White"/>
             <Setter Property="BorderBrush" Value="#444"/>
             <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="6,2"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border x:Name="Border"
+                                    Grid.ColumnSpan="2"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="6" />
+
+                            <ContentPresenter x:Name="ContentSite"
+                                              Grid.Column="0"
+                                              Content="{Binding SelectedItem, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource SelectedItemDisplayConverter}}"
+                                              ContentTemplate="{TemplateBinding ItemTemplate}"
+                                               Margin="8,2,32,2"
+                                               VerticalAlignment="Center"
+                                               RecognizesAccessKey="True">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ComboBox}}"/>
+                                    </Style>
+                                </ContentPresenter.Resources>
+                             </ContentPresenter>
+
+                            <ToggleButton x:Name="ToggleButton"
+                                          Grid.Column="1"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                          Focusable="False"
+                                          Background="Transparent"
+                                          BorderThickness="0"
+                                          Width="28"
+                                          HorizontalAlignment="Right"
+                                          VerticalAlignment="Center">
+                                <Grid Width="12" Height="8" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Path x:Name="Arrow" Fill="Black" Data="M 0 0 L 6 6 L 12 0 Z" Stretch="Fill"/>
+                                </Grid>
+                            </ToggleButton>
+
+                            <Popup x:Name="PART_Popup"
+                                   Grid.ColumnSpan="2"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   Placement="Bottom"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Fade">
+                                <Border Background="White" CornerRadius="6" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" SnapsToDevicePixels="True">
+                                    <ScrollViewer Margin="0" KeyboardNavigation.DirectionalNavigation="Contained">
+                                        <StackPanel IsItemsHost="True" />
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Border" Property="Opacity" Value="0.6"/>
+                                <Setter Property="Foreground" Value="#777"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
+
+        <!-- Ensure ComboBox items use black text in dropdown despite global TextBlock style -->
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="Border" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#e6e6e6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
     </UserControl.Resources>
 
     <Grid VerticalAlignment="Top" HorizontalAlignment="Center">
@@ -120,7 +214,7 @@
                     <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
                         <TextBlock Text="Background:" Width="100" VerticalAlignment="Center"/>
                         <Button x:Name="BtnPickBackground" 
-                                Width="130" 
+                                Width="150" 
                                 Content="Pick Color" 
                                 Click="BtnPickBackground_Click" 
                                 Style="{StaticResource ColorButtonStyle}"/>
@@ -129,7 +223,7 @@
                     <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
                         <TextBlock Text="Foreground:" Width="100" VerticalAlignment="Center"/>
                         <Button x:Name="BtnPickForeground" 
-                                Width="130" 
+                                Width="150" 
                                 Content="Pick Color" 
                                 Click="BtnPickForeground_Click" 
                                 Style="{StaticResource ColorButtonStyle}"/>
@@ -138,7 +232,7 @@
                     <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
                         <TextBlock Text="Hover:" Width="100" VerticalAlignment="Center"/>
                         <Button x:Name="BtnPickHover" 
-                                Width="130" 
+                                Width="150" 
                                 Content="Pick Color" 
                                 Click="BtnPickHover_Click" 
                                 Style="{StaticResource ColorButtonStyle}"/>
@@ -148,7 +242,7 @@
                     <StackPanel Orientation="Horizontal" Margin="0,8,0,2">
                         <TextBlock Text="Theme:" Width="100" VerticalAlignment="Center"/>
                         <ComboBox x:Name="CmbThemes" 
-                                  Width="130" 
+                                  Width="150" 
                                   Margin="0,0,5,0"
                                   SelectionChanged="CmbThemes_SelectionChanged"/>
                         <Button x:Name="BtnSaveTheme" 
@@ -244,6 +338,12 @@
                                    FontSize="9"
                                    Margin="10,0,0,0"
                                    VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Update Interval Mode -->
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,2">
+                        <TextBlock Text="Auto-update:" Width="100" VerticalAlignment="Center"/>
+                        <ComboBox x:Name="CmbUpdateInterval" Width="185" />
                     </StackPanel>
                 </StackPanel>
 

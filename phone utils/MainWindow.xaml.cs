@@ -55,10 +55,13 @@ namespace phone_utils
 
             connectionCheckTimer = new DispatcherTimer
             {
+                // default will be overridden by ApplyUpdateIntervalMode
                 Interval = TimeSpan.FromSeconds(10)
             };
             connectionCheckTimer.Tick += ConnectionCheckTimer_Tick;
-            connectionCheckTimer.Start();
+            ApplyUpdateIntervalMode();
+            if (connectionCheckTimer.Interval.TotalSeconds > 0)
+                connectionCheckTimer.Start();
         }
 
         private async void MainWindow_Loaded(object? sender, RoutedEventArgs e)
@@ -135,6 +138,24 @@ namespace phone_utils
         public async Task ReloadConfiguration()
         {
             LoadConfiguration();
+            // Apply interval mode after reloading config
+            ApplyUpdateIntervalMode();
+            try
+            {
+                if (connectionCheckTimer != null)
+                {
+                    if (connectionCheckTimer.Interval.TotalSeconds > 0)
+                    {
+                        if (!connectionCheckTimer.IsEnabled) connectionCheckTimer.Start();
+                    }
+                    else
+                    {
+                        // disable automatic updates
+                        if (connectionCheckTimer.IsEnabled) connectionCheckTimer.Stop();
+                    }
+                }
+            }
+            catch { }
             EnableButtons(true);
             StatusText.Foreground = new SolidColorBrush(Colors.Red);
             await DetectDeviceAsync();
@@ -699,6 +720,43 @@ namespace phone_utils
                 mediaController?.Clear();
             }
             catch { }
+        }
+        #endregion
+
+        #region Update Interval Mode
+        private void ApplyUpdateIntervalMode()
+        {
+            try
+            {
+                if (config == null) return;
+                int mode = config.UpdateIntervalMode;
+                switch (mode)
+                {
+                    case 1: // Extreme
+                        connectionCheckTimer.Interval = TimeSpan.FromSeconds(1);
+                        break;
+                    case 2: // Fast
+                        connectionCheckTimer.Interval = TimeSpan.FromSeconds(5);
+                        break;
+                    case 3: // Medium
+                        connectionCheckTimer.Interval = TimeSpan.FromSeconds(15);
+                        break;
+                    case 4: // Slow
+                        connectionCheckTimer.Interval = TimeSpan.FromSeconds(30);
+                        break;
+                    case 5: // No automatic update
+                        // set to 0 to indicate disabled
+                        connectionCheckTimer.Interval = TimeSpan.FromSeconds(0);
+                        break;
+                    default:
+                        connectionCheckTimer.Interval = TimeSpan.FromSeconds(15);
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debugger.show("ApplyUpdateIntervalMode failed: " + ex.Message);
+            }
         }
         #endregion
     }
