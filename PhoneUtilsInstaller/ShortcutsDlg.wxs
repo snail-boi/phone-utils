@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<Fragment>
+		<UI>
+			<Dialog Id="ShortcutsDlg" Width="370" Height="270" Title="!(loc.InstallDirDlg_Title)">
+				<Control Id="Title" Type="Text" X="15" Y="6" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="{\WixUI_Font_Title}Shortcut Options" />
+				<Control Id="Description" Type="Text" X="25" Y="23" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="Choose where you want shortcuts created." />
+				<Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44" TabSkip="no" Text="!(loc.InstallDirDlgBannerBitmap)" />
+				<Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
+				<Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+
+				<!-- Desktop Shortcut Checkbox -->
+				<Control Id="DesktopShortcutCheckbox" Type="CheckBox" X="20" Y="70" Width="300" Height="17" Property="CREATE_DESKTOP_SHORTCUT" CheckBoxValue="1" Text="Create a &amp;desktop shortcut" />
+				
+				<!-- Start Menu Shortcut Checkbox -->
+				<Control Id="StartMenuShortcutCheckbox" Type="CheckBox" X="20" Y="95" Width="300" Height="17" Property="CREATE_STARTMENU_SHORTCUT" CheckBoxValue="1" Text="Create a &amp;Start Menu shortcut" />
+
+				<!-- Back Button -->
+				<Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)" />
+				
+				<!-- Next Button -->
+				<Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)">
+					<Publish Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
+				</Control>
+				
+				<!-- Cancel Button -->
+				<Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">
+					<Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
+				</Control>
+			</Dialog>
+		</UI>
+	</Fragment>
+</Wix>

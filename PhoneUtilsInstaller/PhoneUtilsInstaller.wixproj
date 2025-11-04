@@ -21,7 +21,9 @@
     </DefineConstants>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="CustomUI.wxs" />
     <Compile Include="Product.wxs" />
+    <Compile Include="ShortcutsDlg.wxs" />
   </ItemGroup>
   <ItemGroup>
     <WixExtension Include="WixUIExtension">
@@ -30,6 +32,7 @@
     </WixExtension>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="INSTALLER_CHANGES.md" />
     <Content Include="Version.wxi" />
   </ItemGroup>
   <Import Project="$(WixTargetsPath)" Condition=" '$(WixTargetsPath)' != '' " />

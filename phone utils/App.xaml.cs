@@ -9,7 +9,7 @@ namespace phone_utils
     /// </summary>
     public partial class App : Application
     {
-        public static readonly string CurrentVersion = "v1.2-beta13";
+        public static readonly string CurrentVersion = "v1.2-beta14";
     }
 
 }
