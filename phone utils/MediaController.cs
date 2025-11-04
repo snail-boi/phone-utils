@@ -161,10 +161,17 @@ namespace phone_utils
             }
         }
 
+        public bool IsPaused { get; private set; }
+
         public async Task UpdateMediaControlsAsync(string title, string artist, string album, bool isPlaying)
         {
             try
             {
+                // Always update paused state and SMTC playback status, even if title is unchanged
+                IsPaused = !isPlaying;
+                if (smtcControls != null)
+                    smtcControls.PlaybackStatus = isPlaying ? MediaPlaybackStatus.Playing : MediaPlaybackStatus.Paused;
+
                 if (string.Equals(lastSMTCTitle, title, StringComparison.OrdinalIgnoreCase))
                 {
                     Debugger.show($"SMTC title '{title}' is same as last. Skipping update.");
@@ -172,9 +179,6 @@ namespace phone_utils
                 }
 
                 lastSMTCTitle = title;
-
-                if (smtcControls != null)
-                    smtcControls.PlaybackStatus = isPlaying ? MediaPlaybackStatus.Playing : MediaPlaybackStatus.Paused;
 
                 // Offload image/duration retrieval to avoid UI blocking inside SetSMTCImageAsync which may do file IO.
                 TimeSpan? duration = await SetSMTCImageAsync(title, artist).ConfigureAwait(false);

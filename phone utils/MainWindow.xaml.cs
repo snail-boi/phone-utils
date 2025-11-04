@@ -8,16 +8,17 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using WpfMedia = System.Windows.Media;  // Alias for WPF media
 using Windows.Media;
 using Windows.Media.Playback;
-using CoverArt = TagLib;
-using static phone_utils.SetupControl;
-using Windows.Storage.Streams;
 using Windows.Storage;
-using System.Windows.Media.Animation;
+using Windows.Storage.Streams;
+using static phone_utils.SetupControl;
+using CoverArt = TagLib;
+using WpfMedia = System.Windows.Media;  // Alias for WPF media
+
 
 namespace phone_utils
 {
@@ -43,6 +44,9 @@ namespace phone_utils
         public MainWindow()
         {
             InitializeComponent();
+
+            // Start updater (fire-and-forget)
+            _ = Updater.CheckForUpdateAsync(App.CurrentVersion);
 
             // Initialize media controller (handles MediaPlayer/SMTC)
             mediaController = new MediaController(Dispatcher, () => currentDevice, async () => await UpdateCurrentSongAsync());
