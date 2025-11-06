@@ -42,7 +42,7 @@ namespace phone_utils
                 if (this.FindName("CmbUpdateInterval") is ComboBox cmb)
                 {
                     cmb.ItemsSource = new[] { "Extreme (1s)", "Fast (5s)", "Medium (15s)", "Slow (30s)", "No automatic update" };
-                    int mode = _config.UpdateIntervalMode;
+                    int mode = (int)_config.UpdateIntervalMode;
                     if (mode < 1 || mode > 5) mode = 3;
                     cmb.SelectedIndex = mode - 1;
                     cmb.SelectionChanged += CmbUpdateInterval_SelectionChanged;
@@ -57,7 +57,7 @@ namespace phone_utils
             if (!(sender is ComboBox cmb)) return;
             int sel = cmb.SelectedIndex;
             if (sel < 0) return;
-            _config.UpdateIntervalMode = sel + 1;
+            _config.UpdateIntervalMode = (UpdateIntervalMode)(sel + 1);
             SaveConfig(false);
         }
 

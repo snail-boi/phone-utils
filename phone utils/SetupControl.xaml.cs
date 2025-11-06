@@ -362,6 +362,15 @@ namespace phone_utils
             public bool DevMode { get; set; } = false;
         }
 
+        public enum UpdateIntervalMode
+        {
+            Extreme = 1, // 1s
+            Fast = 2,    // 5s
+            Medium = 3,  // 15s
+            Slow = 4,    // 30s
+            None = 5     // No automatic update
+        }
+
         public class AppConfig
         {
             public PathsConfig Paths { get; set; } = new PathsConfig();
@@ -375,7 +384,7 @@ namespace phone_utils
 
             // Update interval mode for automatic updates in MainWindow
             // 1 = Extreme (1s), 2 = Fast (5s), 3 = Medium (15s), 4 = Slow (30s), 5 = No automatic update
-            public int UpdateIntervalMode { get; set; } = 3;
+            public UpdateIntervalMode UpdateIntervalMode { get; set; } = UpdateIntervalMode.Medium;
             
             public string SelectedDeviceUSB { get; set; } = string.Empty;
             public string SelectedDeviceName { get; set; } = string.Empty;
@@ -470,5 +479,14 @@ namespace phone_utils
 
         }
         #endregion
+
+        public enum BatteryStatus
+        {
+            Unknown = 0,
+            Charging = 2,
+            Discharging = 3,
+            NotCharging = 4,
+            Full = 5
+        }
     }
 }

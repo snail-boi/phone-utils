@@ -349,30 +349,33 @@ namespace phone_utils
             }
         }
 
-        private (int Level, string ChargingStatus, bool IsCharging, double Wattage) ParseBatteryInfo(string output)
+        private (int Level, SetupControl.BatteryStatus Status, string ChargingStatus, bool IsCharging, double Wattage) ParseBatteryInfo(string output)
         {
             var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
             int level = ParseIntFromLine(lines, "level");
-            int status = ParseIntFromLine(lines, "status");
+            int statusInt = ParseIntFromLine(lines, "status");
+            var status = Enum.IsDefined(typeof(SetupControl.BatteryStatus), statusInt)
+                ? (SetupControl.BatteryStatus)statusInt
+                : SetupControl.BatteryStatus.Unknown;
             long currentMicroA = ParseLongFromLine(lines, "Max charging current");
             long voltageMicroV = ParseLongFromLine(lines, "Max charging voltage");
 
             string chargingStatus = status switch
             {
-                2 => "Charging",
-                3 => "Discharging",
-                4 => "Not charging",
-                5 => "Full",
+                SetupControl.BatteryStatus.Charging => "Charging",
+                SetupControl.BatteryStatus.Discharging => "Discharging",
+                SetupControl.BatteryStatus.NotCharging => "Not charging",
+                SetupControl.BatteryStatus.Full => "Full",
                 _ => "Unknown"
             };
 
-            bool isCharging = status == 2;
+            bool isCharging = status == SetupControl.BatteryStatus.Charging;
             double amps = currentMicroA / 1_000_000.0;
             double volts = voltageMicroV / 1_000_000.0;
             double wattage = amps * volts;
 
-            return (level, chargingStatus, isCharging, wattage);
+            return (level, status, chargingStatus, isCharging, wattage);
         }
 
         private int ParseIntFromLine(string[] lines, string prefix)
@@ -733,23 +736,22 @@ namespace phone_utils
             try
             {
                 if (config == null) return;
-                int mode = config.UpdateIntervalMode;
+                var mode = config.UpdateIntervalMode;
                 switch (mode)
                 {
-                    case 1: // Extreme
+                    case SetupControl.UpdateIntervalMode.Extreme:
                         connectionCheckTimer.Interval = TimeSpan.FromSeconds(1);
                         break;
-                    case 2: // Fast
+                    case SetupControl.UpdateIntervalMode.Fast:
                         connectionCheckTimer.Interval = TimeSpan.FromSeconds(5);
                         break;
-                    case 3: // Medium
+                    case SetupControl.UpdateIntervalMode.Medium:
                         connectionCheckTimer.Interval = TimeSpan.FromSeconds(15);
                         break;
-                    case 4: // Slow
+                    case SetupControl.UpdateIntervalMode.Slow:
                         connectionCheckTimer.Interval = TimeSpan.FromSeconds(30);
                         break;
-                    case 5: // No automatic update
-                        // set to 0 to indicate disabled
+                    case SetupControl.UpdateIntervalMode.None:
                         connectionCheckTimer.Interval = TimeSpan.FromSeconds(0);
                         break;
                     default:
