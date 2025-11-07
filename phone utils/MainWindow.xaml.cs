@@ -53,6 +53,29 @@ namespace phone_utils
             mediaController.Initialize();
 
             LoadConfiguration();
+            // Show info popup if no devices are saved
+            if (config.SavedDevices == null || config.SavedDevices.Count == 0)
+            {
+                string message =
+                    "No devices are saved in your configuration yet.\n\n" +
+                    "Please add a device in the settings to use Phone Utils.\n\n" +
+                    "If this is your first time using this app, ensure that USB debugging is enabled on your phone:\n" +
+                    "1. Open your phone's Settings app.\n" +
+                    "2. Enable Developer Mode (usually found under 'About Phone' → tap 'Build Number' several times).\n" +
+                    "3. Go to Developer Options and turn on 'USB Debugging'.\n" +
+                    "4. (Optional) Enable 'Wireless Debugging' to use this app over Wi-Fi.";
+
+                string title = "No Saved Devices Found";
+
+                MessageBox.Show(
+                    message,
+                    title,
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information
+                );
+            }
+
+
             // Move device detection to the Loaded event so we can await it properly
             this.Loaded += MainWindow_Loaded;
             UpdateBackgroundImage();

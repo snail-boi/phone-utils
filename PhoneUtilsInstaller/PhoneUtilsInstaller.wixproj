@@ -32,7 +32,6 @@
     </WixExtension>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="INSTALLER_CHANGES.md" />
     <Content Include="Version.wxi" />
   </ItemGroup>
   <Import Project="$(WixTargetsPath)" Condition=" '$(WixTargetsPath)' != '' " />

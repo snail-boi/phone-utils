@@ -190,13 +190,23 @@ namespace phone_utils
                 string serial = await GetFirstUsbSerialAsync();
                 if (serial == null)
                 {
-                    MessageBox.Show("No USB device found. Ensure USB debugging is enabled.", "Device Not Found", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show(
+                        "No USB device was detected.\n\n" +
+                        "Please ensure the following:\n" +
+                        "1. USB debugging is enabled on your phone.\n" +
+                        "2. Your phone is connected via a USB cable.\n" +
+                        "3. You’ve allowed the computer’s RSA prompt on your device (if shown).",
+                        "Device Not Found",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning
+                    );
                     return;
                 }
 
                 // Try to get IP (Wi-Fi)
                 string ip = await GetDeviceIpAsync(serial);
                 string tcpIpWithPort;
+                bool saveWithWifi = false;
 
                 if (string.IsNullOrEmpty(ip))
                 {
@@ -207,19 +217,37 @@ namespace phone_utils
                         MessageBoxButton.YesNo,
                         MessageBoxImage.Question
                     );
-
                     if (result != MessageBoxResult.Yes)
                     {
                         return;
                     }
-
                     tcpIpWithPort = "None";
                     Debugger.show($"Device IP: {ip}, TCP: {tcpIpWithPort}");
                 }
                 else
                 {
-                    tcpIpWithPort = $"{ip}:5555";
-                    Debugger.show($"Device IP: {ip}, TCP: {tcpIpWithPort}");
+                    // Ask user if they want to save with Wi-Fi or USB only, with security warning
+                    var result = MessageBox.Show(
+                        $"A Wi-Fi IP was detected for this device: {ip}:5555\n\nDo you want to save this device with Wi-Fi (IP) or USB only?\n\nWarning: Using IP on an unsecured network can be dangerous. Only use Wi-Fi connection if you trust your network.",
+                        "Save Device With Wi-Fi?",
+                        MessageBoxButton.YesNoCancel,
+                        MessageBoxImage.Warning
+                    );
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        tcpIpWithPort = $"{ip}:5555";
+                        saveWithWifi = true;
+                        Debugger.show($"Device IP: {ip}, TCP: {tcpIpWithPort} (Wi-Fi chosen)");
+                    }
+                    else if (result == MessageBoxResult.No)
+                    {
+                        tcpIpWithPort = "None";
+                        Debugger.show($"Device IP: {ip}, TCP: {tcpIpWithPort} (USB only chosen)");
+                    }
+                    else // Cancel
+                    {
+                        return;
+                    }
                 }
 
                 string name = TxtDeviceName.Text.Trim();
@@ -259,10 +287,15 @@ namespace phone_utils
 
                 await SaveConfig(false);
 
-                string msg = tcpIpWithPort == "None"
-                    ? "Device saved successfully as USB only."
-                    : $"Device saved successfully. Detected IP: {tcpIpWithPort}";
-
+                string msg;
+                if (tcpIpWithPort == "None")
+                {
+                    msg = "Device saved successfully (USB connection only).";
+                }
+                else
+                {
+                    msg = $"Device saved successfully.\n\nDetected IP: {tcpIpWithPort}\nYou can now disconnect the USB cable.\n\nWarning: Using IP on an unsecured network can be dangerous.";
+                }
                 Debugger.show(msg);
                 MessageBox.Show(msg, "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
