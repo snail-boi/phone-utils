@@ -38,6 +38,8 @@ namespace phone_utils
         public static bool debugmode;
 
         private MediaController mediaController;
+
+        private int lastBatteryLevel = 100; // Add this field at the class level if not present
         #endregion
 
         #region Constructor
@@ -433,10 +435,11 @@ namespace phone_utils
 
         private void CheckBatteryWarnings(int level, bool isCharging)
         {
-            // Reset warnings when charging starts
-            if (isCharging && !wasCharging)
+            // Reset warnings if battery level rises above 30% (from 30 or below)
+            if (level > 30 && lastBatteryLevel <= 30)
             {
                 shownBatteryWarnings.Clear();
+                Debugger.show($"Battery warnings reset: level rose above 30% (was {lastBatteryLevel}%, now {level}%)");
             }
 
             // Only trigger at specific thresholds
@@ -460,14 +463,14 @@ namespace phone_utils
                         MessageBoxImage.Warning
                     );
                 }
-
                 shownBatteryWarnings.Add(level);
             }
 
+            // Update last battery level
+            lastBatteryLevel = level;
             // Update last charging state
             wasCharging = isCharging;
         }
-
 
 
 
@@ -583,7 +586,7 @@ namespace phone_utils
                     {
                         string packageName = match2.Groups[1].Value;
                         DeviceStatusText.Text = $"Current App: {packageName}";
-                    }
+                      }
                     else
                     {
                         DeviceStatusText.Text = $"Current app not found";
