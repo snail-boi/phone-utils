@@ -1,3 +1,6 @@
+pls consider donating to my kofi
+https://ko-fi.com/snailboi
+
 # Phone Control GUI (C# WPF)
 
 This is a small C# WPF program that was made partially as a joke.
