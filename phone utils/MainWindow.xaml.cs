@@ -443,7 +443,7 @@ namespace phone_utils
             }
 
             // Only trigger at specific thresholds
-            if ((level == 20 || level == 10 || level == 5 || level == 1) && !shownBatteryWarnings.Contains(level) && (isCharging || wattage >= 4))
+            if ((level == 20 || level == 10 || level == 5 || level == 1) && !shownBatteryWarnings.Contains(level) && (!isCharging || wattage >= 4))
             {
                 if (level == 1)
                 {
