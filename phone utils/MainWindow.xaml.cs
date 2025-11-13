@@ -365,7 +365,7 @@ namespace phone_utils
                     : $"Battery: {batteryInfo.Level}% ({batteryInfo.ChargingStatus})";
 
                 SetBatteryStatus(displayText, GetBatteryColor(batteryInfo.Level));
-                CheckBatteryWarnings(batteryInfo.Level, batteryInfo.IsCharging);
+                CheckBatteryWarnings(batteryInfo.Level, batteryInfo.IsCharging, batteryInfo.Wattage);
             }
             catch (Exception ex)
             {
@@ -433,7 +433,7 @@ namespace phone_utils
             };
         }
 
-        private void CheckBatteryWarnings(int level, bool isCharging)
+        private void CheckBatteryWarnings(int level, bool isCharging, double wattage)
         {
             // Reset warnings if battery level rises above 30% (from 30 or below)
             if (level > 30 && lastBatteryLevel <= 30)
@@ -443,7 +443,7 @@ namespace phone_utils
             }
 
             // Only trigger at specific thresholds
-            if ((level == 20 || level == 10 || level == 5 || level == 1) && !shownBatteryWarnings.Contains(level))
+            if ((level == 20 || level == 10 || level == 5 || level == 1) && !shownBatteryWarnings.Contains(level) && (isCharging || wattage >= 4))
             {
                 if (level == 1)
                 {
