@@ -442,8 +442,8 @@ namespace phone_utils
                 Debugger.show($"Battery warnings reset: level rose above 30% (was {lastBatteryLevel}%, now {level}%)");
             }
 
-            // Only trigger at specific thresholds
-            if ((level == 20 || level == 10 || level == 5 || level == 1) && !shownBatteryWarnings.Contains(level))
+            // Only trigger at specific thresholds and when the device is not charging.
+            if ((level == 20 || level == 10 || level == 5 || level == 1) && !shownBatteryWarnings.Contains(level) && !isCharging)
             {
                 if (level == 1)
                 {
