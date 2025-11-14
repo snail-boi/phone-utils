@@ -394,6 +394,22 @@ namespace phone_utils
             public bool DebugMode { get; set; } = false;
             public bool DevMode { get; set; } = false;
         }
+        public class BatteryWarningSettingConfig
+        {
+            public bool ShowWarning { get; set; } = true; //whether to show battery warnings
+            public bool chargingwarningenabled { get; set; } = true;  //whether to show charging warnings while charging
+            public bool wattthresholdenabled { get; set; } = true; //whether to use watt threshold charging rates for warnings
+            public double wattthreshold { get; set; } = 2.5f; //how many watts the phone must be charging at to avoid warnings
+            public bool firswarningenabled { get; set; } = true; //whether to show first warning
+            public double firstwarning { get; set; } = 20.0f; //first warning level (percentage)
+            public bool secondwarningenabled { get; set; } = true; //whether to show second warning
+            public double secondwarning { get; set; } = 10.0f; //second warning level (percentage)
+            public bool thirdwarningenabled { get; set; } = true; //whether to show third warning
+            public double thirdwarning { get; set; } = 5.0f; //third warning level (percentage)
+            public bool shutdownwarningenabled { get; set; } = true; //whether to show shutdown warning
+            public double shutdownwarning { get; set; } = 2.0f; //shutdown warning level (percentage)
+            public bool emergencydisconnectenabled { get; set; } = true; //whether to force phone utils to stop the adb connection when battery is critically low
+        }
 
         public enum UpdateIntervalMode
         {
@@ -410,6 +426,7 @@ namespace phone_utils
             public FileSyncConfig FileSync { get; set; } = new FileSyncConfig();
             public ScrcpyConfig ScrcpySettings { get; set; } = new ScrcpyConfig();
             public YTDLConfig YTDL { get; set; } = new YTDLConfig();
+            public BatteryWarningSettingConfig BatteryWarningSettings { get; set; } = new BatteryWarningSettingConfig();
             public List<ThemesConfig> Themes { get; set; } = new List<ThemesConfig>();
             public ButtonStyleConfig ButtonStyle { get; set; } = new ButtonStyleConfig();
             public List<DeviceConfig> SavedDevices { get; set; } = new List<DeviceConfig>();

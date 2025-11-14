@@ -58,7 +58,7 @@ namespace phone_utils
             int sel = cmb.SelectedIndex;
             if (sel < 0) return;
             _config.UpdateIntervalMode = (UpdateIntervalMode)(sel + 1);
-            SaveConfig(false);
+            SaveConfig();
         }
 
         private void LoadThemesIntoComboBox()
@@ -136,7 +136,7 @@ namespace phone_utils
 
                 MessageBox.Show($"Theme '{newTheme.Name}' saved successfully!", "Success",
                                 MessageBoxButton.OK, MessageBoxImage.Information);
-                SaveConfig(false);
+                SaveConfig();
             }
         }
 
@@ -147,7 +147,7 @@ namespace phone_utils
                 _config.ButtonStyle.Foreground = selectedTheme.Foreground;
                 _config.ButtonStyle.Background = selectedTheme.Background;
                 _config.ButtonStyle.Hover = selectedTheme.Hover;
-                SaveConfig(false);
+                SaveConfig();
                 ApplyTheme(selectedTheme);
                 _main.ReloadConfiguration();
                 LoadThemesIntoComboBox();
@@ -182,7 +182,7 @@ namespace phone_utils
                     _config.Themes.Remove(selectedTheme);
 
                     // Save config
-                    SaveConfig(false);
+                    SaveConfig();
 
                     // Reload the themes in ComboBox
                     LoadThemesIntoComboBox();
@@ -229,7 +229,7 @@ namespace phone_utils
             if (picker.ShowDialog() == true)
             {
                 apply(picker.SelectedColor);
-                SaveConfig(false);
+                SaveConfig();
             }
         }
 
@@ -271,7 +271,7 @@ namespace phone_utils
                 TxtBackground.Text = dlg.FileName;
                 Debugger.show("Background selected: " + TxtBackground.Text);
                 _config.Paths.Background = TxtBackground.Text;
-                SaveConfig(false);
+                SaveConfig();
             }
         }
         #endregion
@@ -292,7 +292,7 @@ namespace phone_utils
 
             if (result == MessageBoxResult.Yes)
             {
-                SaveConfig(false);
+                SaveConfig();
             }
             else
             {
@@ -306,7 +306,7 @@ namespace phone_utils
 
             _config.SpecialOptions.DevMode = false;
             Debugger.show("DevMode unchecked.");
-            SaveConfig(false);
+            SaveConfig();
         }
         #endregion
         #region music presence
@@ -315,7 +315,7 @@ namespace phone_utils
             if (_isInitializing) return;
             _config.SpecialOptions.MusicPresence = true;
             Debugger.show("MusicPresence checked.");
-            SaveConfig(false);
+            SaveConfig();
         }
 
         private void ChkMusicPresence_Unchecked(object sender, RoutedEventArgs e)
@@ -323,7 +323,7 @@ namespace phone_utils
             if (_isInitializing) return;
             _config.SpecialOptions.MusicPresence = false;
             Debugger.show("MusicPresence unchecked.");
-            SaveConfig(false);
+            SaveConfig();
         }
         #endregion
         #region debug mode
@@ -332,7 +332,7 @@ namespace phone_utils
             if (_isInitializing) return;
             _config.SpecialOptions.DebugMode = true;
             Debugger.show("DebugMode checked.");
-            SaveConfig(false);
+            SaveConfig();
         }
 
         private void ChkDebugMode_Unchecked(object sender, RoutedEventArgs e)
@@ -340,14 +340,127 @@ namespace phone_utils
             if (_isInitializing) return;
             _config.SpecialOptions.DebugMode = false;
             Debugger.show("DebugMode unchecked.");
-            SaveConfig(false);
+            SaveConfig();
+        }
+        #endregion
+
+        #region Battery Settings Handlers
+        private void ShowBatteryWarnings_Checked(object sender, RoutedEventArgs e)
+        {
+            _config.BatteryWarningSettings.ShowWarning = true;
+            SaveConfig();
+        }
+        private void ShowBatteryWarnings_Unchecked(object sender, RoutedEventArgs e)
+        {
+            _config.BatteryWarningSettings.ShowWarning = false;
+            SaveConfig();
+        }
+        private void ShowBatteryChargeWarnings_Checked(object sender, RoutedEventArgs e)
+        {
+            _config.BatteryWarningSettings.chargingwarningenabled = true;
+            SaveConfig();
+        }
+        private void ShowBatteryChargeWarnings_Unchecked(object sender, RoutedEventArgs e)
+        {
+            _config.BatteryWarningSettings.chargingwarningenabled = false;
+            SaveConfig();
+        }
+        private void WattThreshholdEnabled_Checked(object sender, RoutedEventArgs e)
+        {
+            _config.BatteryWarningSettings.wattthresholdenabled = true;
+            SaveConfig();
+        }
+        private void WattThreshholdEnabled_Unchecked(object sender, RoutedEventArgs e)
+        {
+            _config.BatteryWarningSettings.wattthresholdenabled = false;
+            SaveConfig();
+        }
+        private void WattThreshhold_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (double.TryParse(WattThreshhold.Text, out double value))
+                _config.BatteryWarningSettings.wattthreshold = value;
+            SaveConfig();
+        }
+        private void FirstWarningEnabled_Checked(object sender, RoutedEventArgs e)
+        {
+            _config.BatteryWarningSettings.firswarningenabled = true;
+            SaveConfig();
+        }
+        private void FirstWarningEnabled_Unchecked(object sender, RoutedEventArgs e)
+        {
+            _config.BatteryWarningSettings.firswarningenabled = false;
+            SaveConfig();
+        }
+        private void FirstWarning_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (double.TryParse(FirstWarning.Text, out double value))
+                _config.BatteryWarningSettings.firstwarning = value;
+            SaveConfig();
+        }
+        private void SecondWarningEnabled_Checked(object sender, RoutedEventArgs e)
+        {
+            _config.BatteryWarningSettings.secondwarningenabled = true;
+            SaveConfig();
+        }
+        private void SecondWarningEnabled_Unchecked(object sender, RoutedEventArgs e)
+        {
+            _config.BatteryWarningSettings.secondwarningenabled = false;
+            SaveConfig();
+        }
+        private void SecondWarning_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (double.TryParse(SecondWarning.Text, out double value))
+                _config.BatteryWarningSettings.secondwarning = value;
+            SaveConfig();
+        }
+        private void ThirdWarningEnabled_Checked(object sender, RoutedEventArgs e)
+        {
+            _config.BatteryWarningSettings.thirdwarningenabled = true;
+            SaveConfig();
+        }
+        private void ThirdWarningEnabled_Unchecked(object sender, RoutedEventArgs e)
+        {
+            _config.BatteryWarningSettings.thirdwarningenabled = false;
+            SaveConfig();
+        }
+        private void ThirdWarning_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (double.TryParse(ThirdWarning.Text, out double value))
+                _config.BatteryWarningSettings.thirdwarning = value;
+            SaveConfig();
+        }
+        private void ShutdownWarningEnabled_Checked(object sender, RoutedEventArgs e)
+        {
+            _config.BatteryWarningSettings.shutdownwarningenabled = true;
+            SaveConfig();
+        }
+        private void ShutdownWarningEnabled_Unchecked(object sender, RoutedEventArgs e)
+        {
+            _config.BatteryWarningSettings.shutdownwarningenabled = false;
+            SaveConfig();
+        }
+        private void FinalWarning_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (double.TryParse(FinalWarning.Text, out double value))
+                _config.BatteryWarningSettings.shutdownwarning = value;
+            SaveConfig();
+        }
+        private void EmergencyShutdown_Checked(object sender, RoutedEventArgs e)
+        {
+            _config.BatteryWarningSettings.emergencydisconnectenabled = true;
+            SaveConfig();
+        }
+        private void EmergencyShutdown_Unchecked(object sender, RoutedEventArgs e)
+        {
+            _config.BatteryWarningSettings.emergencydisconnectenabled = false;
+            SaveConfig();
         }
         #endregion
 
 
 
         #region Config Save
-        private void SaveConfig(bool showmessage)
+        private void SaveConfig(bool showmessage = false)
         {
             try
             {

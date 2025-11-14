@@ -37,6 +37,7 @@ namespace phone_utils
         public bool MusicPresence;
         public static bool debugmode;
 
+
         private MediaController mediaController;
 
         private int lastBatteryLevel = 100; // Add this field at the class level if not present
@@ -162,6 +163,8 @@ namespace phone_utils
                 Application.Current.Resources["ButtonForeground"] = new SolidColorBrush(Colors.White);
                 Application.Current.Resources["ButtonHover"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#553fff"));
             }
+
+
         }
 
         public async Task ReloadConfiguration()
@@ -443,7 +446,18 @@ namespace phone_utils
             }
 
             // Only trigger at specific thresholds
-            if ((level == 20 || level == 10 || level == 5 || level == 1) && !shownBatteryWarnings.Contains(level) && (!isCharging || wattage >= 4))
+            if (config.BatteryWarningSettings.ShowWarning 
+                && (config.BatteryWarningSettings.firswarningenabled && level <= config.BatteryWarningSettings.firstwarning) 
+                || (config.BatteryWarningSettings.secondwarningenabled && level <= config.BatteryWarningSettings.secondwarning)
+                || (config.BatteryWarningSettings.thirdwarningenabled && level <= config.BatteryWarningSettings.thirdwarning)
+                || (config.BatteryWarningSettings.shutdownwarningenabled && level <= config.BatteryWarningSettings.shutdownwarning))
+            {
+                if (config.BatteryWarningSettings.wattthresholdenabled)
+                {
+                    if(config.BatteryWarningSettings.wattthreshold < wattage) //maak dit logisch
+                }
+            }
+            if ((level == config.BatteryWarningSettings.firstwarning || level == 10 || level == 5 || level == 1) && !shownBatteryWarnings.Contains(level) && (!isCharging || wattage >= 4))
             {
                 if (level == 1)
                 {
