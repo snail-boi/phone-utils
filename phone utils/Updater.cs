@@ -94,9 +94,12 @@ public static class Updater
             string installerName = installerAsset.Value.GetProperty("name").GetString();
             string downloadUrl = installerAsset.Value.GetProperty("browser_download_url").GetString();
 
-            // Ask user to update
+            // Fetch patch notes from release body
+            string patchNotes = GetReleaseNotes(latestRelease.Value);
+
+            // Ask user to update, showing patch notes
             var result = MessageBox.Show(
-                $"A new version {latestVersion} is available.\nDo you want to download and install it?",
+                $"A new version {latestVersion} is available!\n\nPatch notes:\n\n{patchNotes}\n\nDo you want to download and install it?",
                 "Update Available",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Information);
@@ -117,6 +120,17 @@ public static class Updater
         {
             MessageBox.Show($"Update check failed:\n{ex.Message}", "Update Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
+    }
+
+    // Helper to extract release notes from GitHub release JSON
+    private static string GetReleaseNotes(JsonElement release)
+    {
+        if (release.TryGetProperty("body", out JsonElement bodyElem))
+        {
+            string notes = bodyElem.GetString() ?? "";
+            return notes.Trim();
+        }
+        return "No patch notes available.";
     }
 
     /// <summary>
