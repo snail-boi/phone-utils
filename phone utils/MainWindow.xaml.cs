@@ -40,7 +40,8 @@ namespace phone_utils
 
         private MediaController mediaController;
 
-        private int lastBatteryLevel = 100; // Add this field at the class level if not present
+        private int lastBatteryLevel = 100; // Add this field at the class level
+        private bool _isBatteryWarningShown = false; // Prevent multiple battery warnings
         #endregion
 
         #region Constructor
@@ -439,45 +440,76 @@ namespace phone_utils
         private void CheckBatteryWarnings(int level, bool isCharging, double wattage)
         {
             // Reset warnings if battery level rises above 30% (from 30 or below)
-            if (level > 30 && lastBatteryLevel <= 30)
+            if (level > config.BatteryWarningSettings.firstwarning+10 && lastBatteryLevel <= config.BatteryWarningSettings.firstwarning + 10)
             {
                 shownBatteryWarnings.Clear();
                 Debugger.show($"Battery warnings reset: level rose above 30% (was {lastBatteryLevel}%, now {level}%)");
             }
 
             // Only trigger at specific thresholds
-            if (config.BatteryWarningSettings.ShowWarning 
-                && (config.BatteryWarningSettings.firswarningenabled && level <= config.BatteryWarningSettings.firstwarning) 
-                || (config.BatteryWarningSettings.secondwarningenabled && level <= config.BatteryWarningSettings.secondwarning)
-                || (config.BatteryWarningSettings.thirdwarningenabled && level <= config.BatteryWarningSettings.thirdwarning)
-                || (config.BatteryWarningSettings.shutdownwarningenabled && level <= config.BatteryWarningSettings.shutdownwarning))
+            if (
+                config.BatteryWarningSettings.ShowWarning
+                && (
+                    !config.BatteryWarningSettings.wattthresholdenabled
+                    || wattage <= config.BatteryWarningSettings.wattthreshold
+                )
+                && (
+                    (config.BatteryWarningSettings.firstwarningenabled && level == config.BatteryWarningSettings.firstwarning && !shownBatteryWarnings.Contains(level)) ||
+                    (config.BatteryWarningSettings.secondwarningenabled && level == config.BatteryWarningSettings.secondwarning && !shownBatteryWarnings.Contains(level)) ||
+                    (config.BatteryWarningSettings.thirdwarningenabled && level == config.BatteryWarningSettings.thirdwarning && !shownBatteryWarnings.Contains(level)) ||
+                    (config.BatteryWarningSettings.shutdownwarningenabled && level <= config.BatteryWarningSettings.shutdownwarning && !shownBatteryWarnings.Contains(level))
+                )
+            )
             {
-                if (config.BatteryWarningSettings.wattthresholdenabled)
+                if (_isBatteryWarningShown) return; // Prevent multiple dialogs
+                _isBatteryWarningShown = true;
+                try
                 {
-                    if(config.BatteryWarningSettings.wattthreshold < wattage) //maak dit logisch
+                    if (level == config.BatteryWarningSettings.shutdownwarning)
+                    {
+                        if (config.BatteryWarningSettings.emergencydisconnectenabled)
+                        {
+                            Task.Run(() =>
+                            {
+                                MessageBox.Show(
+                                    "Shutting down Phone Utils in 5 seconds.\nConnect your charger immediately!",
+                                    "Critical Battery",
+                                    MessageBoxButton.OK,
+                                    MessageBoxImage.Error
+                                );
+                            });
+                            // Shutdown after 1 second, regardless of MessageBox interaction
+                            Dispatcher.InvokeAsync(async () =>
+                            {
+                                await Task.Delay(5000);
+                                Application.Current.Shutdown();
+                            });
+                        }
+                        else
+                        {
+                            MessageBox.Show(
+                                $"Battery critically low at {level}%! Connect your charger immediately.",
+                                "Critical Battery",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Error
+                            );
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show(
+                            $"Battery is at {level}%. Please charge your device.",
+                            "Low Battery",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning
+                        );
+                    }
+                    shownBatteryWarnings.Add(level);
                 }
-            }
-            if ((level == config.BatteryWarningSettings.firstwarning || level == 10 || level == 5 || level == 1) && !shownBatteryWarnings.Contains(level) && (!isCharging || wattage >= 4))
-            {
-                if (level == 1)
+                finally
                 {
-                    MessageBox.Show(
-                        "Battery critically low at 1%! Connect your charger immediately.",
-                        "Critical Battery",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error
-                    );
+                    _isBatteryWarningShown = false;
                 }
-                else
-                {
-                    MessageBox.Show(
-                        $"Battery is at {level}%. Please charge your device.",
-                        "Low Battery",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning
-                    );
-                }
-                shownBatteryWarnings.Add(level);
             }
 
             // Update last battery level
@@ -533,7 +565,6 @@ namespace phone_utils
                 {
                     if (!block.Contains("package=in.krosbits.musicolet") || !block.Contains("active=true"))
                         continue;
-
                     // Extract metadata: title, artist, album
                     var metaMatch = Regex.Match(block,
                         @"metadata:\s+size=\d+,\s+description=(.+?),\s+(.+?),\s+(.+)",

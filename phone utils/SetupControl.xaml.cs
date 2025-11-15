@@ -400,7 +400,7 @@ namespace phone_utils
             public bool chargingwarningenabled { get; set; } = true;  //whether to show charging warnings while charging
             public bool wattthresholdenabled { get; set; } = true; //whether to use watt threshold charging rates for warnings
             public double wattthreshold { get; set; } = 2.5f; //how many watts the phone must be charging at to avoid warnings
-            public bool firswarningenabled { get; set; } = true; //whether to show first warning
+            public bool firstwarningenabled { get; set; } = true; //whether to show first warning
             public double firstwarning { get; set; } = 20.0f; //first warning level (percentage)
             public bool secondwarningenabled { get; set; } = true; //whether to show second warning
             public double secondwarning { get; set; } = 10.0f; //second warning level (percentage)

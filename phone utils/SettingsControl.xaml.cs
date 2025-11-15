@@ -98,6 +98,21 @@ namespace phone_utils
             ChkDevmode.IsChecked = _config.SpecialOptions.DevMode;
             ChkMusicPresence.IsChecked = _config.SpecialOptions.MusicPresence;
             ChkDebugMode.IsChecked = _config.SpecialOptions.DebugMode;
+
+            // Battery warning settings
+            ShowBatteryWarnings.IsChecked = _config.BatteryWarningSettings.ShowWarning;
+            ShowBatteryChargeWarnings.IsChecked = _config.BatteryWarningSettings.chargingwarningenabled;
+            WattThreshholdEnabled.IsChecked = _config.BatteryWarningSettings.wattthresholdenabled;
+            WattThreshhold.Text = _config.BatteryWarningSettings.wattthreshold.ToString();
+            FirstWarningEnabled.IsChecked = _config.BatteryWarningSettings.firstwarningenabled;
+            FirstWarning.Text = _config.BatteryWarningSettings.firstwarning.ToString();
+            SecondWarningEnabled.IsChecked = _config.BatteryWarningSettings.secondwarningenabled;
+            SecondWarning.Text = _config.BatteryWarningSettings.secondwarning.ToString();
+            ThirdWarningEnabled.IsChecked = _config.BatteryWarningSettings.thirdwarningenabled;
+            ThirdWarning.Text = _config.BatteryWarningSettings.thirdwarning.ToString();
+            ShutdownWarningEnabled.IsChecked = _config.BatteryWarningSettings.shutdownwarningenabled;
+            FinalWarning.Text = _config.BatteryWarningSettings.shutdownwarning.ToString();
+            EmergencyShutdown.IsChecked = _config.BatteryWarningSettings.emergencydisconnectenabled;
         }
 
 
@@ -383,12 +398,12 @@ namespace phone_utils
         }
         private void FirstWarningEnabled_Checked(object sender, RoutedEventArgs e)
         {
-            _config.BatteryWarningSettings.firswarningenabled = true;
+            _config.BatteryWarningSettings.firstwarningenabled = true;
             SaveConfig();
         }
         private void FirstWarningEnabled_Unchecked(object sender, RoutedEventArgs e)
         {
-            _config.BatteryWarningSettings.firswarningenabled = false;
+            _config.BatteryWarningSettings.firstwarningenabled = false;
             SaveConfig();
         }
         private void FirstWarning_TextChanged(object sender, TextChangedEventArgs e)
