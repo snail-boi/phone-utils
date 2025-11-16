@@ -216,29 +216,29 @@
                     <StackPanel Orientation="Vertical" Margin="8">
 
                         <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
-                            <TextBlock Text="Background:" Width="100" VerticalAlignment="Center"/>
-                            <Button x:Name="BtnPickBackground" 
+                            <TextBlock Text="Button Background:" Width="120" VerticalAlignment="Center" ToolTip="Pick the background color for all buttons."/>
+                            <Button x:Name="BtnPickButtonBackground" 
                                     Width="150" 
                                     Content="Pick Color" 
-                                    Click="BtnPickBackground_Click" 
+                                    Click="BtnPickButtonBackground_Click" 
                                     Style="{StaticResource ColorButtonStyle}"/>
                         </StackPanel>
 
                         <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
-                            <TextBlock Text="Foreground:" Width="100" VerticalAlignment="Center"/>
-                            <Button x:Name="BtnPickForeground" 
+                            <TextBlock Text="Button Text:" Width="120" VerticalAlignment="Center" ToolTip="Pick the text color for all buttons."/>
+                            <Button x:Name="BtnPickButtonText" 
                                     Width="150" 
                                     Content="Pick Color" 
-                                    Click="BtnPickForeground_Click" 
+                                    Click="BtnPickButtonText_Click" 
                                     Style="{StaticResource ColorButtonStyle}"/>
                         </StackPanel>
 
                         <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
-                            <TextBlock Text="Hover:" Width="100" VerticalAlignment="Center"/>
-                            <Button x:Name="BtnPickHover" 
+                            <TextBlock Text="Button Hover:" Width="120" VerticalAlignment="Center" ToolTip="Pick the hover color for all buttons."/>
+                            <Button x:Name="BtnPickButtonHover" 
                                     Width="150" 
                                     Content="Pick Color" 
-                                    Click="BtnPickHover_Click" 
+                                    Click="BtnPickButtonHover_Click" 
                                     Style="{StaticResource ColorButtonStyle}"/>
                         </StackPanel>
 

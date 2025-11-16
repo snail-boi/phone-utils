@@ -1,11 +1,9 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Xml.Linq;
 using YourApp;
-using static phone_utils.SetupControl;
+
 
 namespace phone_utils
 {
@@ -123,9 +121,10 @@ namespace phone_utils
             Application.Current.Resources["ButtonForeground"] = (SolidColorBrush)new BrushConverter().ConvertFromString(style.Foreground);
             Application.Current.Resources["ButtonHover"] = (SolidColorBrush)new BrushConverter().ConvertFromString(style.Hover);
 
-            BtnPickBackground.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(style.Background));
-            BtnPickForeground.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(style.Foreground));
-            BtnPickHover.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(style.Hover));
+            // Set the color swatches for the pickers
+            BtnPickButtonBackground.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(style.Background));
+            BtnPickButtonText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(style.Foreground));
+            BtnPickButtonHover.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(style.Hover));
         }
 
         private void BtnSaveTheme_Click(object sender, RoutedEventArgs e)
@@ -237,6 +236,7 @@ namespace phone_utils
 
 
         #region Color Pickers
+        // Opens a color picker dialog and applies the selected color using the provided action
         private void PickColor(SolidColorBrush currentBrush, Action<Color> apply)
         {
             Debugger.show("Opening color picker.");
@@ -248,27 +248,30 @@ namespace phone_utils
             }
         }
 
-        private void BtnPickBackground_Click(object sender, RoutedEventArgs e) =>
-            PickColor(BtnPickBackground.Background as SolidColorBrush, c =>
+        // Button background color picker
+        private void BtnPickButtonBackground_Click(object sender, RoutedEventArgs e) =>
+            PickColor(BtnPickButtonBackground.Background as SolidColorBrush, c =>
             {
                 Application.Current.Resources["ButtonBackground"] = new SolidColorBrush(c);
-                BtnPickBackground.Background = new SolidColorBrush(c);
+                BtnPickButtonBackground.Background = new SolidColorBrush(c);
                 _config.ButtonStyle.Background = c.ToString();
             });
 
-        private void BtnPickForeground_Click(object sender, RoutedEventArgs e) =>
-            PickColor(BtnPickForeground.Background as SolidColorBrush, c =>
+        // Button text color picker
+        private void BtnPickButtonText_Click(object sender, RoutedEventArgs e) =>
+            PickColor(BtnPickButtonText.Background as SolidColorBrush, c =>
             {
                 Application.Current.Resources["ButtonForeground"] = new SolidColorBrush(c);
-                BtnPickForeground.Background = new SolidColorBrush(c);
+                BtnPickButtonText.Background = new SolidColorBrush(c);
                 _config.ButtonStyle.Foreground = c.ToString();
             });
 
-        private void BtnPickHover_Click(object sender, RoutedEventArgs e) =>
-            PickColor(BtnPickHover.Background as SolidColorBrush, c =>
+        // Button hover color picker
+        private void BtnPickButtonHover_Click(object sender, RoutedEventArgs e) =>
+            PickColor(BtnPickButtonHover.Background as SolidColorBrush, c =>
             {
                 Application.Current.Resources["ButtonHover"] = new SolidColorBrush(c);
-                BtnPickHover.Background = new SolidColorBrush(c);
+                BtnPickButtonHover.Background = new SolidColorBrush(c);
                 _config.ButtonStyle.Hover = c.ToString();
             });
         #endregion

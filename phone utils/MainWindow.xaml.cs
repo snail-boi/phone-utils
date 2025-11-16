@@ -1,24 +1,11 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Security.Cryptography;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using Windows.Media;
-using Windows.Media.Playback;
-using Windows.Storage;
-using Windows.Storage.Streams;
-using static phone_utils.SetupControl;
-using CoverArt = TagLib;
-using WpfMedia = System.Windows.Media;  // Alias for WPF media
-
 
 namespace phone_utils
 {
