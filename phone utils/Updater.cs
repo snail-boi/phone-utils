@@ -4,11 +4,18 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows;
 
+
+
+/// <summary>
+/// very important reminder as to how the updater works
+/// it first checks numerically eg 1.2.0 or 1.3.0 (this takes priority)
+/// if it finds multiple matching version eg 1.2-beta17 or 1.2-beta16 (-betanumber get's cuttoff) it will switch checking lexographically with beta
+/// </summary>
 public static class Updater
 {
     private const string RepoOwner = "snail-boi";
-    private const string RepoName = "phone-utils";
-    private const string InstallerPrefix = "Phone.Utils.Installer";
+    private const string RepoName = "Vermilia-phone-utils";
+    private const string InstallerPrefix = "Vermilia.Phone.Utils.Installer"; // Updated prefix
 
     /// <summary>
     /// Call this at app startup (Option 1: fire-and-forget) or in Loaded event.

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.13.35931.197
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "phone utils", "phone utils\phone utils.csproj", "{118C8A62-E9A0-4C3D-9768-5285F966EA55}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vermilia phone-utils", "phone utils\Vermilia phone-utils.csproj", "{118C8A62-E9A0-4C3D-9768-5285F966EA55}"
 EndProject
 Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "PhoneUtilsInstaller", "PhoneUtilsInstaller\PhoneUtilsInstaller.wixproj", "{7AC84941-C43E-49E3-9BF0-10CB00142C11}"
 EndProject
