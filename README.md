@@ -33,9 +33,9 @@ this is primarily a GUI for **scrcpy** and **ADB**, with some fun features:
   Share the current media playing on your phone to Discord.
 
 - **SMTC**  
-  Makes phone media appear as if it’s playing on the PC.`*Needs music presence enablef*`
+  Makes phone media appear as if it’s playing on the PC.`*Needs music presence enabled*`
 
-  Textbox under the current device reflects media playing instead of the active app `*Needs music presence enablef*`
+  Textbox under the current device reflects media playing instead of the active app `*Needs music presence enabled*`
 
 - **Global hotkeys**
 
@@ -67,5 +67,5 @@ This software is provided under a **read-only, view-only license**:
 - You may **run the compiled binaries** for personal, non-commercial purposes.  
 - You may **not copy, modify, redistribute, or create derivative works** from the source code or binaries without explicit written permission.  
 - You may not decompile or reverse-engineer the binaries beyond normal usage.
--See [LICENSE.txt](LICENSE.txt) for full license terms.
+- See [LICENSE.txt](LICENSE.txt) for full license terms.
 - Third-party components are licensed separately (see [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)).
