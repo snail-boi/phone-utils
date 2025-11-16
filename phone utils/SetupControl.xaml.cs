@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace phone_utils
 {
@@ -20,6 +21,14 @@ namespace phone_utils
         {
             InitializeComponent();
             _main = main;
+
+            // Set background color from config
+            try
+            {
+                var config = ConfigManager.Load(configPath);
+                Application.Current.Resources["AppBackgroundColor"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(config.ButtonStyle.BackgroundColor ?? "#111111"));
+            }
+            catch { Application.Current.Resources["AppBackgroundColor"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#111111")); }
 
             Debugger.show("SetupControl initialized. Loading configuration from: " + configPath);
             _config = ConfigManager.Load(configPath);

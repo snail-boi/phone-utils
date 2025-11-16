@@ -1,7 +1,7 @@
 ﻿<UserControl x:Class="phone_utils.ScrcpyControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             Background="#661E1E1E">
+             Background="{DynamicResource AppBackgroundColor}">
 
     <UserControl.Resources>
         <!-- Modern Button Style -->

@@ -18,6 +18,13 @@ namespace phone_utils
             InitializeComponent();
             _main = main;
 
+            // Set background color from config
+            try
+            {
+                Application.Current.Resources["AppBackgroundColor"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(_main.Config.ButtonStyle.BackgroundColor ?? "#111111"));
+            }
+            catch { Application.Current.Resources["AppBackgroundColor"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#111111")); }
+
             BtnStartScrcpy.Click += BtnStartScrcpy_Click;
             this.Loaded += ScrcpyControl_Loaded;
 

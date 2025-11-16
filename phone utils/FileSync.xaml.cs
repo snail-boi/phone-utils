@@ -17,6 +17,18 @@ namespace phone_utils
         public FileSync()
         {
             InitializeComponent();
+            // Set background color from config
+            try
+            {
+                string configPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "Phone Utils",
+                    "config.json"
+                );
+                var config = ConfigManager.Load(configPath);
+                Application.Current.Resources["AppBackgroundColor"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(config.ButtonStyle.BackgroundColor ?? "#111111"));
+            }
+            catch { Application.Current.Resources["AppBackgroundColor"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#111111")); }
             LoadDirectoryPaths();
         }
 
@@ -83,7 +95,6 @@ namespace phone_utils
             Application.Current.Resources["ButtonHover"] =
                 (SolidColorBrush)new BrushConverter().ConvertFromString(config.ButtonStyle.Hover);
         }
-
 
 
 

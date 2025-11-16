@@ -18,6 +18,19 @@ namespace phone_utils
             _main = main;
             _currentDevice = currentDevice;
 
+            // Set background color from config
+            try
+            {
+                string configPath = System.IO.Path.Combine(
+                    System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData),
+                    "Phone Utils",
+                    "config.json"
+                );
+                var config = ConfigManager.Load(configPath);
+                Application.Current.Resources["AppBackgroundColor"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(config.ButtonStyle.BackgroundColor ?? "#111111"));
+            }
+            catch { Application.Current.Resources["AppBackgroundColor"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#111111")); }
+
             _cts = new CancellationTokenSource();
 
             // Stop the timer when the control is unloaded
