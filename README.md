@@ -3,9 +3,7 @@ https://ko-fi.com/snailboi
 
 # Phone Control GUI (C# WPF)
 
-This is a small C# WPF program that was made partially as a joke.
-
-It’s primarily a GUI for **scrcpy** and **ADB**, with some fun features:
+this is primarily a GUI for **scrcpy** and **ADB**, with some fun features:
 
 ## Features
 
@@ -31,6 +29,14 @@ It’s primarily a GUI for **scrcpy** and **ADB**, with some fun features:
   Configure multiple devices, name them, and select USB-only or USB + WiFi mode.  
   Automatically switches between USB and WiFi if available.
 
+  - **Music presence**  
+  Share the current media playing on your phone to Discord.
+
+- **SMTC**  
+  Makes phone media appear as if it’s playing on the PC.`*Needs music presence enabled*`
+
+  Textbox under the current device reflects media playing instead of the active app `*Needs music presence enabled*`
+
 - **Global hotkeys**
 
 | Hotkey                   | Action |
@@ -48,16 +54,10 @@ It’s primarily a GUI for **scrcpy** and **ADB**, with some fun features:
 *These can be enabled by checking the **DevMode** box in the setup window.*  
 Features marked `*DEVONLY*` will only work in DevMode.
 
-- **Music presence**  
-  Share the current media playing on your phone to Discord.
-
-- **SMTC**  
-  Makes phone media appear as if it’s playing on the PC (audio visualizers work).
-
 - **Expanded app manager**  
   - Send basic YouTube download commands to YTdnlis `*DEVONLY*`  
   - Send a mouse movement to wake up the PC from sleep `*DEVONLY*`  
-  - Textbox under the current device reflects media playing instead of the active app `*DEVONLY*`
+
 
 ## License
 
@@ -66,7 +66,6 @@ This software is provided under a **read-only, view-only license**:
 - You may **view the source code** in this repository.  
 - You may **run the compiled binaries** for personal, non-commercial purposes.  
 - You may **not copy, modify, redistribute, or create derivative works** from the source code or binaries without explicit written permission.  
-- You may not decompile or reverse-engineer the binaries beyond normal usage.  
-
-See [LICENSE.txt](LICENSE.txt) for full license terms.
+- You may not decompile or reverse-engineer the binaries beyond normal usage.
+- See [LICENSE.txt](LICENSE.txt) for full license terms.
 - Third-party components are licensed separately (see [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)).
