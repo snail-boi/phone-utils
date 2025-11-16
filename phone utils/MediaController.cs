@@ -12,6 +12,11 @@ using CoverArt = TagLib;
 
 namespace phone_utils
 {
+    /// <summary>
+    ///     i have no clue how this works, this was completly written by chatgpt
+    ///     so don't touch this shit ever unless absolutely needed
+    /// </summary>
+
     // MediaController encapsulates all SMTC / MediaPlayer logic
     internal class MediaController
     {

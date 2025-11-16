@@ -72,7 +72,7 @@ namespace phone_utils
                 "config.json"
             );
 
-            var config = SetupControl.ConfigManager.Load(configPath);
+            var config = ConfigManager.Load(configPath);
 
             // Load file sync paths
             LocalDirTextBox.Text = config.FileSync.LocalDir;
@@ -105,13 +105,13 @@ namespace phone_utils
             if (!Directory.Exists(folder))
                 Directory.CreateDirectory(folder);
 
-            var config = SetupControl.ConfigManager.Load(configPath);
+            var config = ConfigManager.Load(configPath);
 
             config.FileSync.LocalDir = LocalDirTextBox.Text;
             config.FileSync.RemoteDir = RemoteDirTextBox.Text;
             config.FileSync.recursion = FolderRecursionCheckBox.IsChecked == true;
 
-            SetupControl.ConfigManager.Save(configPath, config);
+            ConfigManager.Save(configPath, config);
         }
 
 

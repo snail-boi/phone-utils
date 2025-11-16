@@ -25,11 +25,10 @@ namespace phone_utils
     public partial class MainWindow : Window
     {
         #region Fields
+        public AppConfig Config; // class-level
         public static string ADB_PATH;
-        private string SCRCPY_PATH;
-        private AppConfig config; // class-level
         private string wifiDevice;
-        private string currentDevice;
+        public string currentDevice;
         private DispatcherTimer connectionCheckTimer;
         private HashSet<int> shownBatteryWarnings = new HashSet<int>();
         private bool wasCharging = false;
@@ -58,10 +57,10 @@ namespace phone_utils
 
             LoadConfiguration();
             // Show info popup if no devices are saved
-            if (config.SavedDevices == null || config.SavedDevices.Count == 0)
+            if (Config.SavedDevices == null || Config.SavedDevices.Count == 0)
             {
                 string message =
-                    "No devices are saved in your configuration yet.\n\n" +
+                    "No devices are saved in your Configuration yet.\n\n" +
                     "Please add a device in the settings to use Phone Utils.\n\n" +
                     "If this is your first time using this app, ensure that USB debugging is enabled on your phone:\n" +
                     "1. Open your phone's Settings app.\n" +
@@ -112,48 +111,40 @@ namespace phone_utils
         #region Configuration & Setup
         private void LoadConfiguration()
         {
-            Debugger.show("Loading configuration...");
+            Debugger.show("Loading Configuration...");
 
             string exeDir = AppDomain.CurrentDomain.BaseDirectory;
-            string configPath = Path.Combine(
+            string ConfigPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 "Phone Utils",
-                "config.json"
+                "Config.json"
             );
 
-            config = SetupControl.ConfigManager.Load(configPath);
+            Config = ConfigManager.Load(ConfigPath);
 
-            Debugger.show($"Config loaded from {configPath}");
+            Debugger.show($"Config loaded from {ConfigPath}");
 
-            ADB_PATH = string.IsNullOrEmpty(config.Paths.Adb)
-                ? Path.Combine(exeDir, "adb.exe")
-                : config.Paths.Adb;
+            ADB_PATH = Config.Paths.Adb;
 
-            Debugger.show($"ADB Path: {ADB_PATH}");
+            Debugger.show($"Scrcpy Path: {Config.Paths.Scrcpy}");
 
-            SCRCPY_PATH = string.IsNullOrEmpty(config.Paths.Scrcpy)
-                ? Path.Combine(exeDir, "scrcpy.exe")
-                : config.Paths.Scrcpy;
-
-            Debugger.show($"Scrcpy Path: {SCRCPY_PATH}");
-
-            wifiDevice = config.SelectedDeviceWiFi;
-            devmode = config.SpecialOptions != null && config.SpecialOptions.DevMode;
-            debugmode = config.SpecialOptions != null && config.SpecialOptions.DebugMode;
-            MusicPresence = config.SpecialOptions != null && config.SpecialOptions.MusicPresence;
+            wifiDevice = Config.SelectedDeviceWiFi;
+            devmode = Config.SpecialOptions != null && Config.SpecialOptions.DevMode;
+            debugmode = Config.SpecialOptions != null && Config.SpecialOptions.DebugMode;
+            MusicPresence = Config.SpecialOptions != null && Config.SpecialOptions.MusicPresence;
 
             Debugger.show($"Selected Wi-Fi device: {wifiDevice}");
             Debugger.show($"Dev mode: {devmode}, Debug mode: {debugmode}");
 
-            // Load button colors from config
+            // Load button colors from Config
             try
             {
                 Application.Current.Resources["ButtonBackground"] =
-                    (SolidColorBrush)new BrushConverter().ConvertFromString(config.ButtonStyle.Background);
+                    (SolidColorBrush)new BrushConverter().ConvertFromString(Config.ButtonStyle.Background);
                 Application.Current.Resources["ButtonForeground"] =
-                    (SolidColorBrush)new BrushConverter().ConvertFromString(config.ButtonStyle.Foreground);
+                    (SolidColorBrush)new BrushConverter().ConvertFromString(Config.ButtonStyle.Foreground);
                 Application.Current.Resources["ButtonHover"] =
-                    (SolidColorBrush)new BrushConverter().ConvertFromString(config.ButtonStyle.Hover);
+                    (SolidColorBrush)new BrushConverter().ConvertFromString(Config.ButtonStyle.Hover);
 
                 Debugger.show("Button colors loaded successfully");
             }
@@ -171,7 +162,7 @@ namespace phone_utils
         public async Task ReloadConfiguration()
         {
             LoadConfiguration();
-            // Apply interval mode after reloading config
+            // Apply interval mode after reloading Config
             ApplyUpdateIntervalMode();
             try
             {
@@ -194,15 +185,15 @@ namespace phone_utils
             await DetectDeviceAsync();
         }
 
-        public string GetPincode() => config.SelectedDevicePincode;
+        public string GetPincode() => Config.SelectedDevicePincode;
         #endregion
 
         #region Background
         private void UpdateBackgroundImage()
         {
-            string imagePath = string.IsNullOrEmpty(config.Paths.Background)
+            string imagePath = string.IsNullOrEmpty(Config.Paths.Background)
                 ? ""
-                : config.Paths.Background;
+                : Config.Paths.Background;
             try
             {
                 var bitmap = new BitmapImage();
@@ -242,14 +233,14 @@ namespace phone_utils
         {
             Debugger.show("Starting device detection...");
 
-            if (!File.Exists(ADB_PATH))
+            if (!File.Exists(Config.Paths.Adb))
             {
                 SetStatus("Please add device under device settings.", Colors.Red);
                 Debugger.show("ADB executable not found");
                 return;
             }
 
-            if (config.SelectedDeviceWiFi != "None")
+            if (Config.SelectedDeviceWiFi != "None")
             {
                 Debugger.show($"Connecting to Wi-Fi device: {wifiDevice}");
                 await AdbHelper.RunAdbAsync($"connect {wifiDevice}");
@@ -261,7 +252,7 @@ namespace phone_utils
             var deviceList = devices.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
             if (await CheckUsbDeviceAsync(deviceList)) return;
-            if (await CheckWifiDeviceAsync(deviceList) && config.SelectedDeviceWiFi != "None") return;
+            if (await CheckWifiDeviceAsync(deviceList) && Config.SelectedDeviceWiFi != "None") return;
 
             SetStatus("No selected device found!", Colors.Red);
             EnableButtons(false);
@@ -270,17 +261,17 @@ namespace phone_utils
 
         private async Task<bool> CheckUsbDeviceAsync(string[] deviceList)
         {
-            if (string.IsNullOrEmpty(config.SelectedDeviceUSB)) return false;
+            if (string.IsNullOrEmpty(Config.SelectedDeviceUSB)) return false;
 
-            bool usbConnected = deviceList.Any(l => l.StartsWith(config.SelectedDeviceUSB) && l.EndsWith("device"));
+            bool usbConnected = deviceList.Any(l => l.StartsWith(Config.SelectedDeviceUSB) && l.EndsWith("device"));
             if (!usbConnected) return false;
 
-            SetStatus($"USB device connected: {config.SelectedDeviceName}", Colors.Green);
-            currentDevice = config.SelectedDeviceUSB;
+            SetStatus($"USB device connected: {Config.SelectedDeviceName}", Colors.Green);
+            currentDevice = Config.SelectedDeviceUSB;
 
             Debugger.show($"USB device {currentDevice} connected");
 
-            if (config.SelectedDeviceWiFi != "None")
+            if (Config.SelectedDeviceWiFi != "None")
             {
                 Debugger.show("Setting up Wi-Fi over USB...");
                 await SetupWifiOverUsbAsync(deviceList);
@@ -297,9 +288,9 @@ namespace phone_utils
 
         private async Task SetupWifiOverUsbAsync(string[] deviceList)
         {
-            if (string.IsNullOrEmpty(config.SelectedDeviceWiFi)) return;
+            if (string.IsNullOrEmpty(Config.SelectedDeviceWiFi)) return;
 
-            bool wifiAlreadyConnected = deviceList.Any(l => l.StartsWith(config.SelectedDeviceWiFi));
+            bool wifiAlreadyConnected = deviceList.Any(l => l.StartsWith(Config.SelectedDeviceWiFi));
             if (wifiAlreadyConnected)
             {
                 Debugger.show("Wi-Fi device already connected via USB setup");
@@ -307,8 +298,8 @@ namespace phone_utils
             }
 
             Debugger.show("Enabling TCP/IP mode on USB device");
-            await AdbHelper.RunAdbAsync($"-s {config.SelectedDeviceUSB} tcpip 5555");
-            var connectResult = await AdbHelper.RunAdbCaptureAsync($"connect {config.SelectedDeviceWiFi}");
+            await AdbHelper.RunAdbAsync($"-s {Config.SelectedDeviceUSB} tcpip 5555");
+            var connectResult = await AdbHelper.RunAdbCaptureAsync($"connect {Config.SelectedDeviceWiFi}");
             Debugger.show($"Wi-Fi connection result: {connectResult}");
 
             StatusText.Text += connectResult.Contains("connected")
@@ -318,13 +309,13 @@ namespace phone_utils
 
         private async Task<bool> CheckWifiDeviceAsync(string[] deviceList)
         {
-            if (string.IsNullOrEmpty(config.SelectedDeviceWiFi)) return false;
+            if (string.IsNullOrEmpty(Config.SelectedDeviceWiFi)) return false;
 
-            bool wifiConnected = deviceList.Any(l => l.StartsWith(config.SelectedDeviceWiFi));
+            bool wifiConnected = deviceList.Any(l => l.StartsWith(Config.SelectedDeviceWiFi));
             if (!wifiConnected) return false;
 
-            SetStatus($"Wi-Fi device connected: {config.SelectedDeviceName}", Colors.CornflowerBlue);
-            currentDevice = config.SelectedDeviceWiFi;
+            SetStatus($"Wi-Fi device connected: {Config.SelectedDeviceName}", Colors.CornflowerBlue);
+            currentDevice = Config.SelectedDeviceWiFi;
             EnableButtons(true);
             await UpdateBatteryStatusAsync();
             await UpdateForegroundAppAsync();
@@ -440,7 +431,7 @@ namespace phone_utils
         private void CheckBatteryWarnings(int level, bool isCharging, double wattage)
         {
             // Reset warnings if battery level rises above 30% (from 30 or below)
-            if (level > config.BatteryWarningSettings.firstwarning+10 && lastBatteryLevel <= config.BatteryWarningSettings.firstwarning + 10)
+            if (level > Config.BatteryWarningSettings.firstwarning+10 && lastBatteryLevel <= Config.BatteryWarningSettings.firstwarning + 10)
             {
                 shownBatteryWarnings.Clear();
                 Debugger.show($"Battery warnings reset: level rose above 30% (was {lastBatteryLevel}%, now {level}%)");
@@ -448,16 +439,16 @@ namespace phone_utils
 
             // Only trigger at specific thresholds
             if (
-                config.BatteryWarningSettings.ShowWarning
+                Config.BatteryWarningSettings.ShowWarning
                 && (
-                    !config.BatteryWarningSettings.wattthresholdenabled
-                    || wattage <= config.BatteryWarningSettings.wattthreshold
+                    !Config.BatteryWarningSettings.wattthresholdenabled
+                    || wattage <= Config.BatteryWarningSettings.wattthreshold
                 )
                 && (
-                    (config.BatteryWarningSettings.firstwarningenabled && level == config.BatteryWarningSettings.firstwarning && !shownBatteryWarnings.Contains(level)) ||
-                    (config.BatteryWarningSettings.secondwarningenabled && level == config.BatteryWarningSettings.secondwarning && !shownBatteryWarnings.Contains(level)) ||
-                    (config.BatteryWarningSettings.thirdwarningenabled && level == config.BatteryWarningSettings.thirdwarning && !shownBatteryWarnings.Contains(level)) ||
-                    (config.BatteryWarningSettings.shutdownwarningenabled && level <= config.BatteryWarningSettings.shutdownwarning && !shownBatteryWarnings.Contains(level))
+                    (Config.BatteryWarningSettings.firstwarningenabled && level == Config.BatteryWarningSettings.firstwarning && !shownBatteryWarnings.Contains(level)) ||
+                    (Config.BatteryWarningSettings.secondwarningenabled && level == Config.BatteryWarningSettings.secondwarning && !shownBatteryWarnings.Contains(level)) ||
+                    (Config.BatteryWarningSettings.thirdwarningenabled && level == Config.BatteryWarningSettings.thirdwarning && !shownBatteryWarnings.Contains(level)) ||
+                    (Config.BatteryWarningSettings.shutdownwarningenabled && level <= Config.BatteryWarningSettings.shutdownwarning && !shownBatteryWarnings.Contains(level))
                 )
             )
             {
@@ -465,9 +456,9 @@ namespace phone_utils
                 _isBatteryWarningShown = true;
                 try
                 {
-                    if (level == config.BatteryWarningSettings.shutdownwarning)
+                    if (level == Config.BatteryWarningSettings.shutdownwarning)
                     {
-                        if (config.BatteryWarningSettings.emergencydisconnectenabled)
+                        if (Config.BatteryWarningSettings.emergencydisconnectenabled)
                         {
                             Task.Run(() =>
                             {
@@ -531,7 +522,7 @@ namespace phone_utils
                     return;
                 }
 
-                if (config.SpecialOptions != null && config.SpecialOptions.MusicPresence)
+                if (Config.SpecialOptions != null && Config.SpecialOptions.MusicPresence)
                 {
                     // DevMode: detect currently playing song in Musicolet
                     await UpdateCurrentSongAsync();
@@ -655,8 +646,8 @@ namespace phone_utils
         #region Button Handlers
         private void EnableButtons(bool enable)
         {
-            bool adbAvailable = File.Exists(ADB_PATH);
-            bool scrcpyAvailable = File.Exists(SCRCPY_PATH);
+            bool adbAvailable = File.Exists(Config.Paths.Adb);
+            bool scrcpyAvailable = File.Exists(Config.Paths.Scrcpy);
 
             BtnScrcpyOptions.IsEnabled = enable && scrcpyAvailable && adbAvailable;
 
@@ -696,7 +687,7 @@ namespace phone_utils
             }
             else
             {
-                ContentHost.Content = new ScrcpyControl(this, currentDevice, SCRCPY_PATH, ADB_PATH, config);
+                ContentHost.Content = new ScrcpyControl(this);
             }
         }
 
@@ -780,7 +771,7 @@ namespace phone_utils
             }
             catch (Exception ex)
             {
-                if(config.SpecialOptions != null && config.SpecialOptions.DebugMode)
+                if(Config.SpecialOptions != null && Config.SpecialOptions.DebugMode)
                     MessageBox.Show($"Failed to close ADB processes: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -806,23 +797,23 @@ namespace phone_utils
         {
             try
             {
-                if (config == null) return;
-                var mode = config.UpdateIntervalMode;
+                if (Config == null) return;
+                var mode = Config.UpdateIntervalMode;
                 switch (mode)
                 {
-                    case SetupControl.UpdateIntervalMode.Extreme:
+                    case UpdateIntervalMode.Extreme:
                         connectionCheckTimer.Interval = TimeSpan.FromSeconds(1);
                         break;
-                    case SetupControl.UpdateIntervalMode.Fast:
+                    case UpdateIntervalMode.Fast:
                         connectionCheckTimer.Interval = TimeSpan.FromSeconds(5);
                         break;
-                    case SetupControl.UpdateIntervalMode.Medium:
+                    case UpdateIntervalMode.Medium:
                         connectionCheckTimer.Interval = TimeSpan.FromSeconds(15);
                         break;
-                    case SetupControl.UpdateIntervalMode.Slow:
+                    case UpdateIntervalMode.Slow:
                         connectionCheckTimer.Interval = TimeSpan.FromSeconds(30);
                         break;
-                    case SetupControl.UpdateIntervalMode.None:
+                    case UpdateIntervalMode.None:
                         connectionCheckTimer.Interval = TimeSpan.FromSeconds(0);
                         break;
                     default:

@@ -15,28 +15,20 @@ namespace phone_utils
     public partial class ScrcpyControl : UserControl, IDisposable
     {
         private readonly MainWindow _main;
-        private readonly string _device;
-        private readonly string _SCRCPY_PATH;
-        private readonly string _ADB_PATH;
-        private readonly AppConfig _appConfig;
         private GlobalHotkeyManager _hotkeyManager;
         private bool _hotkeysEnabled = true;
         private bool _suppressEvents = false;
 
-        public ScrcpyControl(MainWindow main, string device, string scrcpyPath, string adb, AppConfig config)
+        public ScrcpyControl(MainWindow main)
         {
             InitializeComponent();
             _main = main;
-            _device = device;
-            _SCRCPY_PATH = scrcpyPath;
-            _ADB_PATH = adb;
-            _appConfig = config;
 
             BtnStartScrcpy.Click += BtnStartScrcpy_Click;
             this.Loaded += ScrcpyControl_Loaded;
 
 
-            Debugger.show("ScrcpyControl initialized with device: " + _device); // Added to trace initialization
+            Debugger.show("ScrcpyControl initialized with device: " + main); // Added to trace initialization
             LoadSavedSettings();
         }
 
@@ -100,10 +92,10 @@ namespace phone_utils
         private async Task RunAdbKeyEvent(int keyCode)
         {
             Debugger.show("RunAdbKeyEvent called with keyCode: " + keyCode); // Trace key events
-            if (!_hotkeysEnabled || string.IsNullOrEmpty(_device)) return;
+            if (!_hotkeysEnabled || string.IsNullOrEmpty(_main.currentDevice)) return;
             try
             {
-                await AdbHelper.RunAdbAsync($"-s {_device} shell input keyevent {keyCode}").ConfigureAwait(false);
+                await AdbHelper.RunAdbAsync($"-s {_main.currentDevice} shell input keyevent {keyCode}").ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -114,10 +106,10 @@ namespace phone_utils
         private async Task OnInsertPressedAsync()
         {
             Debugger.show("unlocking phone."); // Trace Insert pressed
-            if (!_hotkeysEnabled || string.IsNullOrEmpty(_device) || _device.Contains(":")) return;
+            if (!_hotkeysEnabled || string.IsNullOrEmpty(_main.currentDevice) || _main.currentDevice.Contains(":")) return;
             try
             {
-                await AdbHelper.RunAdbAsync($"-s {_device} shell input text {_appConfig.SelectedDevicePincode}").ConfigureAwait(false);
+                await AdbHelper.RunAdbAsync($"-s {_main.currentDevice} shell input text {_main.Config.SelectedDevicePincode}").ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -128,10 +120,10 @@ namespace phone_utils
         private async Task LaunchApp(string packageName)
         {
             Debugger.show("Launching app: " + packageName); // Trace which app is being launched
-            if (!_hotkeysEnabled || string.IsNullOrEmpty(_device)) return;
+            if (!_hotkeysEnabled || string.IsNullOrEmpty(_main.currentDevice)) return;
             try
             {
-                await AdbHelper.RunAdbAsync($"-s {_device} shell monkey -p {packageName} -c android.intent.category.LAUNCHER 1").ConfigureAwait(false);
+                await AdbHelper.RunAdbAsync($"-s {_main.currentDevice} shell monkey -p {packageName} -c android.intent.category.LAUNCHER 1").ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -209,7 +201,7 @@ namespace phone_utils
         private void LoadSavedSettings()
         {
             Debugger.show("Loading saved settings..."); // Trace loading settings
-            var settings = _appConfig.ScrcpySettings;
+            var settings = _main.Config.ScrcpySettings;
 
             ChkAudioOnly.IsChecked = settings.AudioOnly;
             ChkNoAudio.IsChecked = settings.NoAudio;
@@ -232,11 +224,11 @@ namespace phone_utils
 
             // Apply button colors
             Application.Current.Resources["ButtonBackground"] =
-                (SolidColorBrush)new BrushConverter().ConvertFromString(_appConfig.ButtonStyle.Background);
+                (SolidColorBrush)new BrushConverter().ConvertFromString(_main.Config.ButtonStyle.Background);
             Application.Current.Resources["ButtonForeground"] =
-                (SolidColorBrush)new BrushConverter().ConvertFromString(_appConfig.ButtonStyle.Foreground);
+                (SolidColorBrush)new BrushConverter().ConvertFromString(_main.Config.ButtonStyle.Foreground);
             Application.Current.Resources["ButtonHover"] =
-                (SolidColorBrush)new BrushConverter().ConvertFromString(_appConfig.ButtonStyle.Hover);
+                (SolidColorBrush)new BrushConverter().ConvertFromString(_main.Config.ButtonStyle.Hover);
 
             Debugger.show("Saved settings applied."); // Confirm settings applied
         }
@@ -244,7 +236,7 @@ namespace phone_utils
         private void SaveCurrentSettings()
         {
             Debugger.show("Saving current settings..."); // Trace saving settings
-            var settings = _appConfig.ScrcpySettings;
+            var settings = _main.Config.ScrcpySettings;
 
             settings.AudioOnly = ChkAudioOnly.IsChecked == true;
             settings.NoAudio = ChkNoAudio.IsChecked == true;
@@ -266,7 +258,7 @@ namespace phone_utils
             string configPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Phone Utils", "config.json");
             if (!Directory.Exists(Path.GetDirectoryName(configPath))) Directory.CreateDirectory(Path.GetDirectoryName(configPath));
 
-            ConfigManager.Save(configPath, _appConfig);
+            ConfigManager.Save(configPath, _main.Config);
             Debugger.show("Settings saved to " + configPath); // Confirm where settings were saved
         }
 
@@ -296,7 +288,7 @@ namespace phone_utils
 
         private async void BtnStartScrcpy_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(_device))
+            if (string.IsNullOrEmpty(_main.currentDevice))
             {
                 MessageBox.Show("No device connected!", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 Debugger.show("BtnStartScrcpy_Click aborted: no device."); // Trace missing device
@@ -310,7 +302,7 @@ namespace phone_utils
         private List<string> BuildScrcpyArgs(bool display = false, bool camera = false)
         {
             var args = new List<string>();
-            args.Add($"--window-title=\"{_appConfig.SelectedDeviceName}\"");
+            args.Add($"--window-title=\"{_main.Config.SelectedDeviceName}\"");
 
             Debugger.show("Building scrcpy args. display=" + display + ", camera=" + camera); // Trace arg build
 
@@ -370,9 +362,9 @@ namespace phone_utils
                 ? "Device Status: Casting without audio"
                 : "Device Status: Casting with audio";
 
-            if (!File.Exists(_SCRCPY_PATH))
+            if (!File.Exists(_main.Config.Paths.Scrcpy))
             {
-                Debugger.show("scrcpy.exe not found at path: " + _SCRCPY_PATH); // Trace missing executable
+                Debugger.show("scrcpy.exe not found at path: " + _main.Config.Paths.Scrcpy); // Trace missing executable
                 MessageBox.Show("scrcpy.exe not found!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -381,8 +373,8 @@ namespace phone_utils
             {
                 var psi = new ProcessStartInfo
                 {
-                    FileName = _SCRCPY_PATH,
-                    Arguments = $"-s {_device} {args}",
+                    FileName = _main.Config.Paths.Scrcpy,
+                    Arguments = $"-s {_main.currentDevice} {args}",
                     UseShellExecute = false,
                     CreateNoWindow = true
                 };
@@ -417,7 +409,7 @@ namespace phone_utils
         private async Task LoadInstalledApps()
         {
             Debugger.show("Loading installed apps..."); // Trace app loading start
-            if (string.IsNullOrEmpty(_device))
+            if (string.IsNullOrEmpty(_main.currentDevice))
             {
                 Debugger.show("LoadInstalledApps aborted: no device."); // Trace missing device
                 return;
@@ -426,7 +418,7 @@ namespace phone_utils
 
             try
             {
-                var output = await AdbHelper.RunAdbCaptureAsync($"-s {_device} shell pm list packages");
+                var output = await AdbHelper.RunAdbCaptureAsync($"-s {_main.currentDevice} shell pm list packages");
                 var packages = output.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
                                      .Where(l => l.StartsWith("package:"))
                                      .Select(l => l.Substring(8))

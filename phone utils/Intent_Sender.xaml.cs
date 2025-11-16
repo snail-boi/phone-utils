@@ -6,7 +6,6 @@ namespace phone_utils
 {
     public partial class Intent_Sender : UserControl
     {
-        public static string _ADB_PATH;
         private MainWindow _main;
         private string _currentDevice;
 
@@ -27,7 +26,7 @@ namespace phone_utils
             else
             {
                 // Otherwise, load YTDLControl
-                ContentArea.Content = new YTDLControl(_main, _currentDevice, _ADB_PATH);
+                ContentArea.Content = new YTDLControl(_main, _currentDevice);
             }
         }
         private void BtnInstaller_Click(object sender, RoutedEventArgs e)

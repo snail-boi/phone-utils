@@ -182,7 +182,7 @@ namespace phone_utils
                 "config.json"
             );
 
-            config = SetupControl.ConfigManager.Load(configPath);
+            config = ConfigManager.Load(configPath);
 
 
             // Load button colors from config

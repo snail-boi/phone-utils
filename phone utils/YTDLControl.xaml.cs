@@ -11,16 +11,14 @@ namespace YTDLApp
 {
     public partial class YTDLControl : UserControl
     {
-        public static string _ADB_PATH;
         private MainWindow _main;
         private string _currentDevice;
 
-        public YTDLControl(MainWindow main, string device, string ADB)
+        public YTDLControl(MainWindow main, string currentDevice)
         {
             InitializeComponent();
             _main = main;
-            _ADB_PATH = ADB;
-            _currentDevice = device;
+            _currentDevice = currentDevice;
             LoadConfiguration();
         }
 
@@ -32,7 +30,7 @@ namespace YTDLApp
                 "config.json"
             );
 
-            var config = SetupControl.ConfigManager.Load(configPath);
+            var config = ConfigManager.Load(configPath);
 
             cmbType.SelectedIndex = config.YTDL.DownloadType;
             chkBackground.IsChecked = config.YTDL.BackgroundCheck;
@@ -93,12 +91,12 @@ namespace YTDLApp
             if (!Directory.Exists(folder))
                 Directory.CreateDirectory(folder);
 
-            var config = SetupControl.ConfigManager.Load(configPath);
+            var config = ConfigManager.Load(configPath);
 
             config.YTDL.DownloadType = cmbType.SelectedIndex;
             config.YTDL.BackgroundCheck = chkBackground.IsChecked == true;
 
-            SetupControl.ConfigManager.Save(configPath, config);
+            ConfigManager.Save(configPath, config);
         }
 
     }

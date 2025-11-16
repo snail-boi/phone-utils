@@ -12,16 +12,16 @@ namespace phone_utils
 {
     public partial class NotificationControl : UserControl
     {
-        private MainWindow mainWindow;
-        private string currentDevice;
+        private MainWindow _main;
+        private string _currentDevice;
         private DispatcherTimer refreshTimer;
         private CancellationTokenSource _cts;
 
-        public NotificationControl(MainWindow parent, string device)
+        public NotificationControl(MainWindow main, string currentDevice)
         {
             InitializeComponent();
-            mainWindow = parent;
-            currentDevice = device;
+            _main = main;
+            _currentDevice = currentDevice;
 
             _cts = new CancellationTokenSource();
 
@@ -97,7 +97,7 @@ namespace phone_utils
                 ct.ThrowIfCancellationRequested();
 
                 // Get notification dump from Android
-                string output = await AdbHelper.RunAdbCaptureAsync($"-s {currentDevice} shell dumpsys notification --noredact");
+                string output = await AdbHelper.RunAdbCaptureAsync($"-s {_currentDevice} shell dumpsys notification --noredact");
 
                 ct.ThrowIfCancellationRequested();
 
