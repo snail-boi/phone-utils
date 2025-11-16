@@ -21,6 +21,7 @@ namespace phone_utils
         public string Foreground { get; set; } = "White";
         public string Background { get; set; } = "#5539cc";
         public string Hover { get; set; } = "#553fff";
+        public string BackgroundColor { get; set; } = "#111111"; // New: background color for main window
     }
 
     public class ButtonStyleConfig
@@ -28,6 +29,7 @@ namespace phone_utils
         public string Foreground { get; set; } = "White";
         public string Background { get; set; } = "#5539cc";
         public string Hover { get; set; } = "#553fff";
+        public string BackgroundColor { get; set; } = "#111111"; // New: background color for main window
     }
 
     public class SpecialOptionsConfig
@@ -89,7 +91,6 @@ namespace phone_utils
             "Resources",
             "adb.exe");
         public string Scrcpy { get; set; } = string.Empty;
-        public string Background { get; set; } = string.Empty;
     }
 
     public class FileSyncConfig
@@ -147,11 +148,11 @@ namespace phone_utils
                 {
                     config.Themes = new List<ThemesConfig>
                     {
-                        new ThemesConfig { Name = "Default Blurple", Foreground = "White", Background = "#5539cc", Hover = "#553fff" },
-                        new ThemesConfig { Name = "SnailDev Red", Foreground = "#FF000000", Background = "#FFC30000", Hover = "#FF8D0000" },
-                        new ThemesConfig { Name = "Grayscale", Foreground = "#FFFFFFFF", Background = "#FF323232", Hover = "#FF282828" },
-                        new ThemesConfig { Name = "White", Foreground = "#FF000000", Background = "#FFFFFFFF", Hover = "#FFC8C8C8" },
-                        new ThemesConfig { Name = "Rissoe", Foreground = "#FF82FF5E", Background = "#FF0743A0", Hover = "#FF003282" }
+                        new ThemesConfig { Name = "Default Blurple", Foreground = "White", Background = "#5539cc", Hover = "#553fff", BackgroundColor = "#111111"},
+                        new ThemesConfig { Name = "SnailDev Red", Foreground = "#FF000000", Background = "#FFC30000", Hover = "#FF8D0000", BackgroundColor = "#111111"},
+                        new ThemesConfig { Name = "Grayscale", Foreground = "#FFFFFFFF", Background = "#FF323232", Hover = "#FF282828", BackgroundColor = "#111111"},
+                        new ThemesConfig { Name = "White", Foreground = "#FF000000", Background = "#FFFFFFFF", Hover = "#FFC8C8C8", BackgroundColor = "#111111"},
+                        new ThemesConfig { Name = "Rissoe", Foreground = "#FF82FF5E", Background = "#FF0743A0", Hover = "#FF003282" , BackgroundColor = "#111111"}
                     };
                 }
 

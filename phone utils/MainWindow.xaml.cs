@@ -68,7 +68,6 @@ namespace phone_utils
 
             // Move device detection to the Loaded event so we can await it properly
             this.Loaded += MainWindow_Loaded;
-            UpdateBackgroundImage();
 
             connectionCheckTimer = new DispatcherTimer
             {
@@ -143,7 +142,17 @@ namespace phone_utils
                 Application.Current.Resources["ButtonHover"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#553fff"));
             }
 
-
+            // Set main window background color
+            try
+            {
+                var bgRect = this.FindName("MainBackgroundRect") as System.Windows.Shapes.Rectangle;
+                if (bgRect != null)
+                {
+                    var color = Config.ButtonStyle.BackgroundColor ?? "#111111";
+                    bgRect.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString(color));
+                }
+            }
+            catch { }
         }
 
         public async Task ReloadConfiguration()
@@ -173,44 +182,6 @@ namespace phone_utils
         }
 
         public string GetPincode() => Config.SelectedDevicePincode;
-        #endregion
-
-        #region Background
-        private void UpdateBackgroundImage()
-        {
-            string imagePath = string.IsNullOrEmpty(Config.Paths.Background)
-                ? ""
-                : Config.Paths.Background;
-            try
-            {
-                var bitmap = new BitmapImage();
-                bitmap.BeginInit();
-
-                if (imagePath.StartsWith("http://") || imagePath.StartsWith("https://"))
-                {
-                    bitmap.UriSource = new Uri(imagePath, UriKind.Absolute);
-                }
-                else if (File.Exists(imagePath))
-                {
-                    bitmap.UriSource = new Uri(imagePath, UriKind.Absolute);
-                }
-                else
-                {
-                    BackgroundImage.Visibility = Visibility.Collapsed;
-                    return;
-                }
-
-                bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                bitmap.EndInit();
-
-                BackgroundImage.Source = bitmap;
-                BackgroundImage.Visibility = Visibility.Visible;
-            }
-            catch
-            {
-                BackgroundImage.Visibility = Visibility.Collapsed;
-            }
-        }
         #endregion
 
         #region Device Detection & Status

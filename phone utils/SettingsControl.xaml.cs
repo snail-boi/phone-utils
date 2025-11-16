@@ -89,8 +89,8 @@ namespace phone_utils
             // Apply button colors
             ApplyButtonColors(_config.ButtonStyle);
 
-            // Set background path
-            TxtBackground.Text = _config.Paths.Background;
+            // Set background color swatch
+            BtnPickBackgroundColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(_config.ButtonStyle.BackgroundColor ?? "#111111"));
 
             // Set checkboxes
             ChkDevmode.IsChecked = _config.SpecialOptions.DevMode;
@@ -274,24 +274,23 @@ namespace phone_utils
                 BtnPickButtonHover.Background = new SolidColorBrush(c);
                 _config.ButtonStyle.Hover = c.ToString();
             });
-        #endregion
 
-        #region Background Image
-        private void BrowseBackground(object sender, RoutedEventArgs e)
-        {
-            var dlg = new Microsoft.Win32.OpenFileDialog
+        // Background color picker
+        private void BtnPickBackgroundColor_Click(object sender, RoutedEventArgs e) =>
+            PickColor(BtnPickBackgroundColor.Background as SolidColorBrush, c =>
             {
-                Filter = "Supported Images|*.jpg;*.png|Jpeg file(*.jpg)|*.jpg|Png file(*.png)|*.png|All files|*.*"
-            };
-
-            if (dlg.ShowDialog() == true)
-            {
-                TxtBackground.Text = dlg.FileName;
-                Debugger.show("Background selected: " + TxtBackground.Text);
-                _config.Paths.Background = TxtBackground.Text;
+                BtnPickBackgroundColor.Background = new SolidColorBrush(c);
+                _config.ButtonStyle.BackgroundColor = c.ToString();
                 SaveConfig();
-            }
-        }
+                // Also update main window background immediately
+                var mainWindow = Window.GetWindow(this) as MainWindow;
+                if (mainWindow != null)
+                {
+                    var bgRect = mainWindow.FindName("MainBackgroundRect") as System.Windows.Shapes.Rectangle;
+                    if (bgRect != null)
+                        bgRect.Fill = new SolidColorBrush(c);
+                }
+            });
         #endregion
 
         #region DevMode

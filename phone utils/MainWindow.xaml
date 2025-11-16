@@ -54,15 +54,8 @@
 
     <!-- Main layered Grid for fallback + image background -->
     <Grid>
-        <!-- Fallback background color -->
-        <Rectangle Fill="#111111"/>
-
-        <!-- Background image -->
-        <Image x:Name="BackgroundImage"
-               Stretch="UniformToFill"
-               HorizontalAlignment="Stretch"
-               VerticalAlignment="Stretch"/>
-
+        <!-- Fallback background color (now dynamic) -->
+        <Rectangle x:Name="MainBackgroundRect" Fill="#111111"/>
 
         <!-- Original content Grid -->
         <Grid Margin="10">
@@ -136,12 +129,12 @@
             <Button x:Name="BtnRefresh"
                     Grid.Row="1"
                     Grid.RowSpan="2"
-                    Content="Refresh device"
-                    Width="120"
+                    Content="Refresh"
+                    Width="100"
                     HorizontalAlignment="Right"
                     Style="{StaticResource ModernButtonStyle}"
                     Click="BtnRefresh_Click"
-                    Margin="0,5,10,0"/>
+                    Margin="0,5,0,10"/>
 
             <!-- Action Buttons -->
             <UniformGrid Grid.Row="4"
@@ -165,7 +158,7 @@
                         Style="{StaticResource ModernButtonStyle}"
                         IsEnabled="True"/>
                 <Button x:Name="BtnSyncMusic"
-                        Content="Sync Music to PC"
+                        Content="Sync Files to PC"
                         Click="BtnSyncMusic_Click"
                         Style="{StaticResource ModernButtonStyle}"
                         IsEnabled="False"/>
