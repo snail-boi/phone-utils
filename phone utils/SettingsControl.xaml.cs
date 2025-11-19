@@ -74,7 +74,8 @@ namespace phone_utils
             var currentTheme = _config.Themes.FirstOrDefault(t =>
                 t.Background == _config.ButtonStyle.Background &&
                 t.Foreground == _config.ButtonStyle.Foreground &&
-                t.Hover == _config.ButtonStyle.Hover);
+                t.Hover == _config.ButtonStyle.Hover &&
+                t.BackgroundColor == _config.ButtonStyle.BackgroundColor);
 
             if (currentTheme != null)
                 CmbThemes.SelectedItem = currentTheme;
@@ -120,11 +121,13 @@ namespace phone_utils
             Application.Current.Resources["ButtonBackground"] = (SolidColorBrush)new BrushConverter().ConvertFromString(style.Background);
             Application.Current.Resources["ButtonForeground"] = (SolidColorBrush)new BrushConverter().ConvertFromString(style.Foreground);
             Application.Current.Resources["ButtonHover"] = (SolidColorBrush)new BrushConverter().ConvertFromString(style.Hover);
+            Application.Current.Resources["MainBackgroundColor"] = (SolidColorBrush)new BrushConverter().ConvertFromString(style.BackgroundColor ?? "#111111");
 
             // Set the color swatches for the pickers
             BtnPickButtonBackground.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(style.Background));
             BtnPickButtonText.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(style.Foreground));
             BtnPickButtonHover.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(style.Hover));
+            BtnPickBackgroundColor.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(style.BackgroundColor ?? "#111111"));
         }
 
         private void BtnSaveTheme_Click(object sender, RoutedEventArgs e)
@@ -141,7 +144,8 @@ namespace phone_utils
                     Name = dialog.ThemeName,
                     Foreground = _config.ButtonStyle.Foreground,
                     Background = _config.ButtonStyle.Background,
-                    Hover = _config.ButtonStyle.Hover
+                    Hover = _config.ButtonStyle.Hover,
+                    BackgroundColor = _config.ButtonStyle.BackgroundColor
                 };
 
                 // ✅ Add the new theme to your theme list
@@ -161,6 +165,7 @@ namespace phone_utils
                 _config.ButtonStyle.Foreground = selectedTheme.Foreground;
                 _config.ButtonStyle.Background = selectedTheme.Background;
                 _config.ButtonStyle.Hover = selectedTheme.Hover;
+                _config.ButtonStyle.BackgroundColor = selectedTheme.BackgroundColor;
                 SaveConfig();
                 ApplyTheme(selectedTheme);
                 _main.ReloadConfiguration();
@@ -176,6 +181,7 @@ namespace phone_utils
             _config.ButtonStyle.Foreground = theme.Foreground;
             _config.ButtonStyle.Background = theme.Background;
             _config.ButtonStyle.Hover = theme.Hover;
+            _config.ButtonStyle.BackgroundColor = theme.BackgroundColor;
         }
 
 
@@ -204,7 +210,9 @@ namespace phone_utils
                     // Optionally, reset button style to default if the deleted theme was selected
                     if (_config.ButtonStyle.Background == selectedTheme.Background &&
                         _config.ButtonStyle.Foreground == selectedTheme.Foreground &&
-                        _config.ButtonStyle.Hover == selectedTheme.Hover)
+                        _config.ButtonStyle.Hover == selectedTheme.Hover &&
+                        _config.ButtonStyle.BackgroundColor == selectedTheme.BackgroundColor)
+
                     {
                         // Reset to first theme or defaults
                         if (_config.Themes.Count > 0)
@@ -217,7 +225,8 @@ namespace phone_utils
                             {
                                 Background = "#FFFFFF",
                                 Foreground = "#000000",
-                                Hover = "#CCCCCC"
+                                Hover = "#CCCCCC",
+                                BackgroundColor = "#111111"
                             };
                             ApplyButtonColors(_config.ButtonStyle);
                         }
