@@ -4,6 +4,11 @@ using System.Windows;
 
 namespace phone_utils
 {
+    public class Scrcpyautostart
+    {
+        public bool Enabled { get; set; } = false;
+        public string Arguments { get; set; } = "";
+    }
     public class DeviceConfig
     {
         public string Name { get; set; } = string.Empty;
@@ -70,6 +75,7 @@ namespace phone_utils
         public PathsConfig Paths { get; set; } = new PathsConfig();
         public FileSyncConfig FileSync { get; set; } = new FileSyncConfig();
         public ScrcpyConfig ScrcpySettings { get; set; } = new ScrcpyConfig();
+        public Scrcpyautostart ScrcpyAutoStart { get; set; } = new Scrcpyautostart();
         public YTDLConfig YTDL { get; set; } = new YTDLConfig();
         public BatteryWarningSettingConfig BatteryWarningSettings { get; set; } = new BatteryWarningSettingConfig();
         public List<ThemesConfig> Themes { get; set; } = new List<ThemesConfig>();

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.DirectoryServices.ActiveDirectory;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -78,6 +79,18 @@ namespace phone_utils
             ApplyUpdateIntervalMode();
             if (connectionCheckTimer.Interval.TotalSeconds > 0)
                 connectionCheckTimer.Start();
+
+            if (Config.ScrcpyAutoStart.Enabled == true)
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = Config.Paths.Scrcpy,
+                    Arguments = $"-s {currentDevice} {Config.ScrcpyAutoStart.Arguments}",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                Debugger.show("Starting scrcpy process with command: " + psi.FileName + " " + psi.Arguments); // Trace process start
+            }
         }
 
         private async void MainWindow_Loaded(object? sender, RoutedEventArgs e)

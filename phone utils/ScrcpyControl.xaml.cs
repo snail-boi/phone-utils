@@ -31,6 +31,7 @@ namespace phone_utils
 
             Debugger.show("ScrcpyControl initialized with device: " + main); // Added to trace initialization
             LoadSavedSettings();
+
         }
 
         private async void ScrcpyControl_Loaded(object sender, RoutedEventArgs e)
@@ -145,6 +146,17 @@ namespace phone_utils
 
         #endregion
 
+        #region fuckit random checkbox go
+        private void ChkAutoEnable_Checked(object sender, RoutedEventArgs e)
+        {
+            //this shit should run whenever you open the usercontrol or check the checkbox, so this things should usually save correctly
+            var args = BuildScrcpyArgs();
+            _main.Config.ScrcpyAutoStart.Arguments = string.Join(" ", args);
+            SaveCurrentSettings();
+            Debugger.show("ChkAutoEnable_Checked: Auto-start enabled."); // Trace auto-start enable
+        }
+        #endregion
+
         #region AudioCheckboxes
 
         private void ChkAudio_Checked(object sender, RoutedEventArgs e)
@@ -220,6 +232,7 @@ namespace phone_utils
             TxtVideoBuffer.Text = settings.VideoBufferSize.ToString();
             CmbAndroidApps.Text = settings.VirtualDisplayApp ?? "";
             CmbCameraList.SelectedIndex = settings.CameraType;
+            ChkAutoEnable.IsChecked = _main.Config.ScrcpyAutoStart.Enabled;
 
             _hotkeysEnabled = settings.EnableHotkeys;
 
@@ -255,6 +268,7 @@ namespace phone_utils
             settings.VideoBufferSize = int.TryParse(TxtVideoBuffer.Text, out int vbuffer) ? vbuffer : 50;
             settings.VirtualDisplayApp = CmbAndroidApps.Text;
             settings.CameraType = CmbCameraList.SelectedIndex;
+            _main.Config.ScrcpyAutoStart.Enabled = ChkAutoEnable.IsChecked == true;
 
             string configPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Phone Utils", "config.json");
             if (!Directory.Exists(Path.GetDirectoryName(configPath))) Directory.CreateDirectory(Path.GetDirectoryName(configPath));
@@ -352,10 +366,13 @@ namespace phone_utils
                 }
             }
 
-            Debugger.show("Final scrcpy args: " + string.Join(" ", args)); // Trace final args list
+            Debugger.show("Final scrcpy args: " + string.Join(" ", args)); // Trace final args li
+            if (_main.Config.ScrcpyAutoStart.Enabled)
+            {
+                _main.Config.ScrcpyAutoStart.Arguments = string.Join(" ", args); // Save for auto-start settings
+            }
             return args;
         }
-
         public async Task RunScrcpyAsync(string args)
         {
             Debugger.show("RunScrcpyAsync called with args: " + args); // Trace scrcpy async launch
